@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - '@scarf/scarf'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - prisma
+  - sharp
+  - unrs-resolver

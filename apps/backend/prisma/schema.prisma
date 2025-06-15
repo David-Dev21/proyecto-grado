@@ -1,0 +1,183 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+enum EstadoAlerta {
+  EN_PELIGRO
+  EN_CAMINO
+  ATENDIDO
+}
+
+enum TipoAlerta {
+  EMERGENCIA
+  INCIDENTE
+  MANTENIMIENTO
+  INFORMATIVO
+  ROBO
+  VIOLENCIA
+  ACCIDENTE
+  OTRO
+}
+
+model Persona {
+  id                 BigInt    @id @default(autoincrement())
+  nombres            String
+  ap_paterno         String
+  ap_materno         String
+  ci                 String
+  fecha_nac          DateTime
+  celular            String
+  correo             String
+  empresa_telefonica String
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  contactos_ref ContactoRef[]
+  alertas       Alerta[]
+
+  @@map("personas")
+}
+
+model ContactoRef {
+  id         BigInt    @id @default(autoincrement())
+  id_persona BigInt
+  nombre     String
+  relacion   String
+  celular    String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  deleted_at DateTime?
+
+  persona Persona @relation(fields: [id_persona], references: [id])
+
+  @@map("contactos_ref")
+}
+
+model Evento {
+  id             BigInt                          @id @default(autoincrement())
+  id_alerta      String
+  id_funcionario String                          @default(uuid())
+  id_seguimiento String?
+  fecha_hora     DateTime
+  ubicacion      Unsupported("geography(POINT)")
+  comentario     String
+  created_at     DateTime                        @default(now())
+  updated_at     DateTime                        @updatedAt
+  deleted_at     DateTime?
+
+  alerta Alerta @relation(fields: [id_alerta], references: [id])
+
+  @@map("eventos")
+}
+
+model Alerta {
+  id               String       @id @default(uuid())
+  id_persona       BigInt
+  id_atencion      BigInt?      @unique // Relación 1:1 con Atencion
+  id_municipio     String?
+  id_cierre_alerta BigInt?      @unique // Relación 1:1 con CierreAlerta
+  fecha_hora       DateTime
+  nro_caso         String
+  estado           EstadoAlerta
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  persona       Persona           @relation(fields: [id_persona], references: [id])
+  atencion      Atencion?         @relation(fields: [id_atencion], references: [id])
+  cierre_alerta CierreAlerta?     @relation(fields: [id_cierre_alerta], references: [id])
+  ubicaciones   UbicacionAlerta[]
+  eventos       Evento[]
+
+  @@map("alertas")
+}
+
+model Atencion {
+  id                  BigInt    @id @default(autoincrement())
+  usuario_despachador BigInt
+  id_vehiculo         String
+  sigla_radio         String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  deleted_at          DateTime?
+
+  alerta                  Alerta? // Relación 1:1 con Alerta
+  atencion_funcionario    AtencionFuncionario[]
+  ubicaciones_funcionario UbicacionFuncionario[]
+
+  @@map("atenciones")
+}
+
+model AtencionFuncionario {
+  id             BigInt    @id @default(autoincrement())
+  id_atencion    BigInt
+  id_funcionario String?   @default(uuid())
+  encargado      Boolean
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+
+  atencion Atencion @relation(fields: [id_atencion], references: [id])
+
+  @@map("atencion_funcionario")
+}
+
+model UbicacionAlerta {
+  id         BigInt                          @id @default(autoincrement())
+  id_alerta  String
+  fecha_hora DateTime
+  ubicacion  Unsupported("geography(POINT)")
+  created_at DateTime                        @default(now())
+  updated_at DateTime                        @updatedAt
+  deleted_at DateTime?
+
+  alerta Alerta @relation(fields: [id_alerta], references: [id])
+
+  @@map("ubicacion_alertas")
+}
+
+model CierreAlerta {
+  id             BigInt     @id @default(autoincrement())
+  id_funcionario String     @default(uuid())
+  fecha_hora     DateTime
+  comentario     String
+  tipo_alerta    TipoAlerta
+  estado_victima String
+  nombre_agresor String
+  ci_agresor     String
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+  deleted_at     DateTime?
+
+  alerta Alerta? // Relación 1:1 con Alerta
+
+  @@map("cierres_alerta")
+}
+
+model UbicacionFuncionario {
+  id          BigInt                          @id @default(autoincrement())
+  id_atencion BigInt
+  fecha_hora  DateTime
+  ubicacion   Unsupported("geography(POINT)")
+  created_at  DateTime                        @default(now())
+  updated_at  DateTime                        @updatedAt
+  deleted_at  DateTime?
+
+  atencion Atencion @relation(fields: [id_atencion], references: [id])
+
+  @@map("ubicacion_funcionarios")
+}
