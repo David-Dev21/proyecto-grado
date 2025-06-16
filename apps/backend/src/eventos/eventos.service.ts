@@ -16,59 +16,18 @@ export class EventosService {
       
       // Crear el evento usando executeRaw para manejar la geometría
       const result = await this.prisma.$executeRaw`
-        INSERT INTO eventos (id_alerta, id_funcionario, id_seguimiento, fecha_hora, ubicacion, comentario)
-        VALUES (${createEventoDto.id_alerta}, ${createEventoDto.id_funcionario}, ${createEventoDto.id_seguimiento || null}, ${new Date(createEventoDto.fecha_hora)}, ST_GeomFromText(${ubicacionPoint}, 4326), ${createEventoDto.comentario})
+        INSERT INTO eventos (uuid, id_alerta, id_funcionario, id_seguimiento, fecha_hora, ubicacion, comentario, created_at, updated_at)
+        VALUES (${createEventoDto.uuid}, ${BigInt(createEventoDto.id_alerta)}, ${createEventoDto.id_funcionario}, ${createEventoDto.id_seguimiento || null}, ${new Date(createEventoDto.fecha_hora)}, ST_GeomFromText(${ubicacionPoint}, 4326), ${createEventoDto.comentario}, NOW(), NOW())
       `;
 
       if (result === 0) {
         throw new BadRequestException('No se pudo crear el evento');
       }
 
-      // Obtener el evento recién creado
-      const eventoCreado = await this.prisma.$queryRaw<any[]>`
-        SELECT 
-          e.id,
-          e.id_alerta,
-          e.id_funcionario,
-          e.id_seguimiento,
-          e.fecha_hora,
-          ST_X(e.ubicacion) as longitud,
-          ST_Y(e.ubicacion) as latitud,
-          e.comentario,
-          e.created_at,
-          e.updated_at,
-          e.deleted_at,
-          json_build_object(
-            'id', a.id,
-            'id_persona', a.id_persona,
-            'tipo_alerta', a.tipo_alerta,
-            'descripcion', a.descripcion,
-            'estado', a.estado
-          ) as alerta
-        FROM eventos e
-        LEFT JOIN alertas a ON e.id_alerta = a.id
-        WHERE e.id_alerta = ${createEventoDto.id_alerta} 
-        AND e.id_funcionario = ${createEventoDto.id_funcionario}
-        AND e.deleted_at IS NULL
-        ORDER BY e.created_at DESC
-        LIMIT 1
-      `;
-
-      if (eventoCreado.length === 0) {
-        throw new BadRequestException('No se pudo obtener el evento creado');
-      }
-
-      const evento = eventoCreado[0];
-      const eventoFormateado = {
-        ...evento,
-        id: evento.id.toString(),
-        ubicacion: {
-          latitud: parseFloat(evento.latitud),
-          longitud: parseFloat(evento.longitud),
-        },
-        latitud: undefined,
-        longitud: undefined,
-      };      return eventoFormateado;
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        message: 'Evento creado exitosamente'
+      };
     } catch (error) {
       this.logger.error('Error al crear evento', error.stack);
       if (error.code === 'P2003') {
@@ -83,6 +42,7 @@ export class EventosService {
       const eventos = await this.prisma.$queryRaw<any[]>`
         SELECT 
           e.id,
+          e.uuid,
           e.id_alerta,
           e.id_funcionario,
           e.id_seguimiento,
@@ -128,6 +88,7 @@ export class EventosService {
       const eventos = await this.prisma.$queryRaw<any[]>`
         SELECT 
           e.id,
+          e.uuid,
           e.id_alerta,
           e.id_funcionario,
           e.id_seguimiento,
@@ -191,7 +152,7 @@ export class EventosService {
       
       if (updateEventoDto.id_alerta) {
         updateQuery += ', id_alerta = $' + (values.length + 1);
-        values.push(updateEventoDto.id_alerta);
+        values.push(BigInt(updateEventoDto.id_alerta));
       }
       if (updateEventoDto.id_funcionario) {
         updateQuery += ', id_funcionario = $' + (values.length + 1);
@@ -218,8 +179,10 @@ export class EventosService {
       updateQuery += ' WHERE id = $' + (values.length + 1);
       values.push(BigInt(id));      await this.prisma.$executeRawUnsafe(updateQuery, ...values);
 
-      // Obtener el evento actualizado
-      return await this.findOne(id);
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        message: 'Evento actualizado exitosamente'
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

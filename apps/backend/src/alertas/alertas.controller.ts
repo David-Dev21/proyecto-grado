@@ -10,7 +10,16 @@ import { UpdateAlertaDto } from './dto/update-alerta.dto';
 export class AlertasController {
   private readonly logger = new Logger(AlertasController.name);
 
-  constructor(private readonly alertasService: AlertasService) {}  @Post()
+  constructor(private readonly alertasService: AlertasService) {}
+
+  // Método para transformar BigInt a string para serialización JSON
+  private transformBigIntToString(obj: any): any {
+    return JSON.parse(JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    ));
+  }
+
+  @Post()
   @ApiOperation({ summary: 'Crear nueva alerta' })
   @ApiResponse({ 
     status: HttpStatus.CREATED, 
@@ -27,7 +36,7 @@ export class AlertasController {
   async create(@Body() createAlertaDto: CreateAlertaDto) {
     try {
       const result = await this.alertasService.create(createAlertaDto);
-      return result;
+      return result; // Ya no devuelve todos los datos, solo un mensaje de éxito
     } catch (error) {      
       // Manejar diferentes tipos de errores de Prisma
       if (error.code === 'P2002') {
@@ -48,7 +57,8 @@ export class AlertasController {
     description: 'Lista de alertas obtenida exitosamente.' 
   })async findAll() {
     try {
-      return await this.alertasService.findAll();
+      const result = await this.alertasService.findAll();
+      return this.transformBigIntToString(result);
     } catch (error) {
       this.logger.error('Error al obtener alertas:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -67,7 +77,8 @@ export class AlertasController {
   })
   async findOne(@Param('id') id: string) {
     try {
-      return await this.alertasService.findOne(id);
+      const result = await this.alertasService.findOne(id);
+      return this.transformBigIntToString(result);
     } catch (error) {
       this.logger.error('Error al obtener alerta:', error);
       throw new HttpException('Alerta no encontrada', HttpStatus.NOT_FOUND);
@@ -91,7 +102,7 @@ export class AlertasController {
   })async update(@Param('id') id: string, @Body() updateAlertaDto: UpdateAlertaDto) {
     try {
       const result = await this.alertasService.update(id, updateAlertaDto);
-      return result;
+      return this.transformBigIntToString(result);
     } catch (error) {
       this.logger.error('Error al actualizar alerta:', error);
       if (error.message.includes('no encontrada')) {

@@ -38,7 +38,8 @@ export class EventosController {
   })
   async create(@Body() createEventoDto: CreateEventoDto) {
     try {
-      return await this.eventosService.create(createEventoDto);
+      const result = await this.eventosService.create(createEventoDto);
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al crear evento:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -95,10 +96,7 @@ export class EventosController {
   ) {
     try {
       const result = await this.eventosService.update(id, updateEventoDto);
-      if (!result) {
-        throw new HttpException('Evento no encontrado', HttpStatus.NOT_FOUND);
-      }
-      return result;
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al actualizar evento:', error);
       if (error.status === HttpStatus.NOT_FOUND) {

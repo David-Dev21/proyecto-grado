@@ -23,6 +23,13 @@ export class CreateAtencionDto {
   @ApiProperty({ 
     example: 1
   })
+  @IsNumber({}, { message: 'id_alerta debe ser un número' })
+  @IsNotEmpty({ message: 'id_alerta no debe estar vacío' })
+  id_alerta: number;
+
+  @ApiProperty({ 
+    example: 1
+  })
   @IsNumber({}, { message: 'usuario_despachador debe ser un número' })
   @IsNotEmpty({ message: 'usuario_despachador no debe estar vacío' })
   usuario_despachador: number;

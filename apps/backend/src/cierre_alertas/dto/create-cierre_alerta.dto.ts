@@ -1,8 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsDateString, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString, IsEnum, IsNumber } from 'class-validator';
 import { TipoAlerta } from '@prisma/client';
 
 export class CreateCierreAlertaDto {
+  @ApiProperty({ example: 1 })
+  @IsNumber({}, { message: 'id_alerta debe ser un número' })
+  @IsNotEmpty({ message: 'id_alerta no debe estar vacío' })
+  id_alerta: number;
+
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   @IsString({ message: 'id_funcionario debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'id_funcionario no debe estar vacío' })

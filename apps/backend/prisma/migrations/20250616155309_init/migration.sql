@@ -10,6 +10,7 @@ CREATE TYPE "TipoAlerta" AS ENUM ('EMERGENCIA', 'INCIDENTE', 'MANTENIMIENTO', 'I
 -- CreateTable
 CREATE TABLE "personas" (
     "id" BIGSERIAL NOT NULL,
+    "uuid" TEXT,
     "nombres" TEXT NOT NULL,
     "ap_paterno" TEXT NOT NULL,
     "ap_materno" TEXT NOT NULL,
@@ -42,7 +43,8 @@ CREATE TABLE "contactos_ref" (
 -- CreateTable
 CREATE TABLE "eventos" (
     "id" BIGSERIAL NOT NULL,
-    "id_alerta" TEXT NOT NULL,
+    "uuid" TEXT NOT NULL,
+    "id_alerta" BIGINT NOT NULL,
     "id_funcionario" TEXT NOT NULL,
     "id_seguimiento" TEXT,
     "fecha_hora" TIMESTAMP(3) NOT NULL,
@@ -57,11 +59,10 @@ CREATE TABLE "eventos" (
 
 -- CreateTable
 CREATE TABLE "alertas" (
-    "id" TEXT NOT NULL,
+    "id" BIGSERIAL NOT NULL,
+    "uuid" TEXT NOT NULL,
     "id_persona" BIGINT NOT NULL,
-    "id_atencion" BIGINT,
     "id_municipio" TEXT,
-    "id_cierre_alerta" BIGINT,
     "fecha_hora" TIMESTAMP(3) NOT NULL,
     "nro_caso" TEXT NOT NULL,
     "estado" "EstadoAlerta" NOT NULL,
@@ -75,6 +76,8 @@ CREATE TABLE "alertas" (
 -- CreateTable
 CREATE TABLE "atenciones" (
     "id" BIGSERIAL NOT NULL,
+    "uuid" TEXT NOT NULL,
+    "id_alerta" BIGINT NOT NULL,
     "usuario_despachador" BIGINT NOT NULL,
     "id_vehiculo" TEXT NOT NULL,
     "sigla_radio" TEXT,
@@ -101,7 +104,7 @@ CREATE TABLE "atencion_funcionario" (
 -- CreateTable
 CREATE TABLE "ubicacion_alertas" (
     "id" BIGSERIAL NOT NULL,
-    "id_alerta" TEXT NOT NULL,
+    "id_alerta" BIGINT NOT NULL,
     "fecha_hora" TIMESTAMP(3) NOT NULL,
     "ubicacion" geography(POINT) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -114,6 +117,8 @@ CREATE TABLE "ubicacion_alertas" (
 -- CreateTable
 CREATE TABLE "cierres_alerta" (
     "id" BIGSERIAL NOT NULL,
+    "uuid" TEXT NOT NULL,
+    "id_alerta" BIGINT NOT NULL,
     "id_funcionario" TEXT NOT NULL,
     "fecha_hora" TIMESTAMP(3) NOT NULL,
     "comentario" TEXT NOT NULL,
@@ -142,10 +147,10 @@ CREATE TABLE "ubicacion_funcionarios" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alertas_id_atencion_key" ON "alertas"("id_atencion");
+CREATE UNIQUE INDEX "atenciones_id_alerta_key" ON "atenciones"("id_alerta");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alertas_id_cierre_alerta_key" ON "alertas"("id_cierre_alerta");
+CREATE UNIQUE INDEX "cierres_alerta_id_alerta_key" ON "cierres_alerta"("id_alerta");
 
 -- AddForeignKey
 ALTER TABLE "contactos_ref" ADD CONSTRAINT "contactos_ref_id_persona_fkey" FOREIGN KEY ("id_persona") REFERENCES "personas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -157,16 +162,16 @@ ALTER TABLE "eventos" ADD CONSTRAINT "eventos_id_alerta_fkey" FOREIGN KEY ("id_a
 ALTER TABLE "alertas" ADD CONSTRAINT "alertas_id_persona_fkey" FOREIGN KEY ("id_persona") REFERENCES "personas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "alertas" ADD CONSTRAINT "alertas_id_atencion_fkey" FOREIGN KEY ("id_atencion") REFERENCES "atenciones"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "alertas" ADD CONSTRAINT "alertas_id_cierre_alerta_fkey" FOREIGN KEY ("id_cierre_alerta") REFERENCES "cierres_alerta"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "atenciones" ADD CONSTRAINT "atenciones_id_alerta_fkey" FOREIGN KEY ("id_alerta") REFERENCES "alertas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "atencion_funcionario" ADD CONSTRAINT "atencion_funcionario_id_atencion_fkey" FOREIGN KEY ("id_atencion") REFERENCES "atenciones"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ubicacion_alertas" ADD CONSTRAINT "ubicacion_alertas_id_alerta_fkey" FOREIGN KEY ("id_alerta") REFERENCES "alertas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cierres_alerta" ADD CONSTRAINT "cierres_alerta_id_alerta_fkey" FOREIGN KEY ("id_alerta") REFERENCES "alertas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ubicacion_funcionarios" ADD CONSTRAINT "ubicacion_funcionarios_id_atencion_fkey" FOREIGN KEY ("id_atencion") REFERENCES "atenciones"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

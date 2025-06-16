@@ -34,6 +34,7 @@ enum TipoAlerta {
 
 model Persona {
   id                 BigInt    @id @default(autoincrement())
+  uuid               String?
   nombres            String
   ap_paterno         String
   ap_materno         String
@@ -69,8 +70,9 @@ model ContactoRef {
 
 model Evento {
   id             BigInt                          @id @default(autoincrement())
-  id_alerta      String
-  id_funcionario String                          @default(uuid())
+  uuid           String                          @default(uuid())
+  id_alerta      BigInt
+  id_funcionario String
   id_seguimiento String?
   fecha_hora     DateTime
   ubicacion      Unsupported("geography(POINT)")
@@ -85,29 +87,30 @@ model Evento {
 }
 
 model Alerta {
-  id               String       @id @default(uuid())
-  id_persona       BigInt
-  id_atencion      BigInt?      @unique // Relación 1:1 con Atencion
-  id_municipio     String?
-  id_cierre_alerta BigInt?      @unique // Relación 1:1 con CierreAlerta
-  fecha_hora       DateTime
-  nro_caso         String
-  estado           EstadoAlerta
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
-  deleted_at       DateTime?
+  id           BigInt       @id @default(autoincrement())
+  uuid         String       @default(uuid())
+  id_persona   BigInt
+  id_municipio String?
+  fecha_hora   DateTime
+  nro_caso     String
+  estado       EstadoAlerta
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+  deleted_at   DateTime?
 
-  persona       Persona           @relation(fields: [id_persona], references: [id])
-  atencion      Atencion?         @relation(fields: [id_atencion], references: [id])
-  cierre_alerta CierreAlerta?     @relation(fields: [id_cierre_alerta], references: [id])
-  ubicaciones   UbicacionAlerta[]
-  eventos       Evento[]
+  persona     Persona           @relation(fields: [id_persona], references: [id])
+  atencion    Atencion?
+  cierre      CierreAlerta?
+  ubicaciones UbicacionAlerta[]
+  eventos     Evento[]
 
   @@map("alertas")
 }
 
 model Atencion {
   id                  BigInt    @id @default(autoincrement())
+  uuid                String    @default(uuid())
+  id_alerta           BigInt    @unique
   usuario_despachador BigInt
   id_vehiculo         String
   sigla_radio         String?
@@ -115,7 +118,7 @@ model Atencion {
   updated_at          DateTime  @updatedAt
   deleted_at          DateTime?
 
-  alerta                  Alerta? // Relación 1:1 con Alerta
+  alerta                  Alerta                 @relation(fields: [id_alerta], references: [id])
   atencion_funcionario    AtencionFuncionario[]
   ubicaciones_funcionario UbicacionFuncionario[]
 
@@ -125,7 +128,7 @@ model Atencion {
 model AtencionFuncionario {
   id             BigInt    @id @default(autoincrement())
   id_atencion    BigInt
-  id_funcionario String?   @default(uuid())
+  id_funcionario String?
   encargado      Boolean
   created_at     DateTime  @default(now())
   updated_at     DateTime  @updatedAt
@@ -138,7 +141,7 @@ model AtencionFuncionario {
 
 model UbicacionAlerta {
   id         BigInt                          @id @default(autoincrement())
-  id_alerta  String
+  id_alerta  BigInt
   fecha_hora DateTime
   ubicacion  Unsupported("geography(POINT)")
   created_at DateTime                        @default(now())
@@ -152,7 +155,9 @@ model UbicacionAlerta {
 
 model CierreAlerta {
   id             BigInt     @id @default(autoincrement())
-  id_funcionario String     @default(uuid())
+  uuid           String     @default(uuid())
+  id_alerta      BigInt     @unique
+  id_funcionario String
   fecha_hora     DateTime
   comentario     String
   tipo_alerta    TipoAlerta
@@ -163,7 +168,7 @@ model CierreAlerta {
   updated_at     DateTime   @updatedAt
   deleted_at     DateTime?
 
-  alerta Alerta? // Relación 1:1 con Alerta
+  alerta Alerta @relation(fields: [id_alerta], references: [id])
 
   @@map("cierres_alerta")
 }

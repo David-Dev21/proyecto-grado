@@ -7,24 +7,24 @@ class PersonaDto {
         example: 'Alicia Flores',
         required: true
     })
-    @IsString({ message: 'persona.nombre debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'persona.nombre no debe estar vacío' })
+    @IsString({ message: 'nombre debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'nombre no debe estar vacío' })
     nombre: string;
 
     @ApiProperty({ 
         example: '12345678-13',
         required: true
     })
-    @IsString({ message: 'persona.cedulaIdentidad debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'persona.cedulaIdentidad no debe estar vacío' })
+    @IsString({ message: 'cedulaIdentidad debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'cedulaIdentidad no debe estar vacío' })
     cedulaIdentidad: string;
 
     @ApiProperty({ 
         example: '2001-03-05',
         required: true
     })
-    @IsDateString({}, { message: 'persona.fechaNacimiento debe ser una fecha válida' })
-    @IsNotEmpty({ message: 'persona.fechaNacimiento no debe estar vacío' })
+    @IsDateString({}, { message: 'fechaNacimiento debe ser una fecha válida' })
+    @IsNotEmpty({ message: 'fechaNacimiento no debe estar vacío' })
     fechaNacimiento: string;
 }
 
@@ -33,17 +33,17 @@ class ContactoDto {
         example: '71234567',
         required: true
     })
-    @IsString({ message: 'contacto.celular debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'contacto.celular no debe estar vacío' })
+    @IsString({ message: 'celular debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'celular no debe estar vacío' })
     celular: string;
 
     @ApiProperty({ 
         example: 'victima@correo.xyz',
         required: true
     })
-    @IsString({ message: 'contacto.correo debe ser una cadena de texto' })
-    @IsEmail({}, { message: 'contacto.correo debe ser un email válido' })
-    @IsNotEmpty({ message: 'contacto.correo no debe estar vacío' })
+    @IsString({ message: 'correo debe ser una cadena de texto' })
+    @IsEmail({}, { message: 'correo debe ser un email válido' })
+    @IsNotEmpty({ message: 'correo no debe estar vacío' })
     correo: string;
 }
 
@@ -52,24 +52,24 @@ class ContactoAdicionalDto {
         example: 'Pedro Flores',
         required: true
     })
-    @IsString({ message: 'contacto.nombre debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'contacto.nombre no debe estar vacío' })
+    @IsString({ message: 'nombre debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'nombre no debe estar vacío' })
     nombre: string;
 
     @ApiProperty({ 
         example: 'Papá',
         required: true
     })
-    @IsString({ message: 'contacto.relacion debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'contacto.relacion no debe estar vacío' })
+    @IsString({ message: 'relacion debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'relacion no debe estar vacío' })
     relacion: string;
 
     @ApiProperty({ 
         example: '77654321',
         required: true
     })
-    @IsString({ message: 'contacto.celular debe ser una cadena de texto' })
-    @IsNotEmpty({ message: 'contacto.celular no debe estar vacío' })
+    @IsString({ message: 'celular debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'celular no debe estar vacío' })
     celular: string;
 }
 

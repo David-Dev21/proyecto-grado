@@ -14,6 +14,7 @@ export class AtencionesService {
       // Crear la atención
       const atencion = await this.prisma.atencion.create({
         data: {
+          id_alerta: BigInt(createAtencionDto.id_alerta),
           usuario_despachador: BigInt(createAtencionDto.usuario_despachador),
           id_vehiculo: createAtencionDto.id_vehiculo,
           sigla_radio: createAtencionDto.sigla_radio
@@ -29,17 +30,10 @@ export class AtencionesService {
         }))
       });
 
-      // Retornar la atención creada con sus funcionarios
-      return this.prisma.atencion.findUnique({
-        where: { id: atencion.id },
-        include: {
-          atencion_funcionario: {
-            where: {
-              deleted_at: null
-            }
-          }
-        }
-      });
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        message: 'Atención creada exitosamente'
+      };
 
     } catch (error) {
       this.logger.error('Error al crear atención:', error);
@@ -137,17 +131,10 @@ export class AtencionesService {
         }
       }
 
-      // Retornar la atención actualizada con sus funcionarios
-      return this.prisma.atencion.findUnique({
-        where: { id: BigInt(id) },
-        include: {
-          atencion_funcionario: {
-            where: {
-              deleted_at: null
-            }
-          }
-        }
-      });
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        message: 'Atención actualizada exitosamente'
+      };
 
     } catch (error) {
       this.logger.error('Error al actualizar atención:', error);

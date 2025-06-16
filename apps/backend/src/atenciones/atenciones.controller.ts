@@ -10,7 +10,14 @@ import { Atencion } from './entities/atencion.entity';
 export class AtencionesController {
   private readonly logger = new Logger(AtencionesController.name);
 
-  constructor(private readonly atencionesService: AtencionesService) {}  @Post()
+  constructor(private readonly atencionesService: AtencionesService) {}
+
+  // Método para transformar BigInt a string para serialización JSON
+  private transformBigIntToString(obj: any): any {
+    return JSON.parse(JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    ));
+  }  @Post()
   @ApiOperation({ summary: 'Crear nueva atención' })@ApiResponse({ 
     status: HttpStatus.CREATED,
     description: 'La atención ha sido creada exitosamente.'
@@ -26,7 +33,7 @@ export class AtencionesController {
   async create(@Body() createAtencionDto: CreateAtencionDto) {
     try {
       const result = await this.atencionesService.create(createAtencionDto);
-      return result;
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al crear atención:', error);
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -39,7 +46,8 @@ export class AtencionesController {
   })
   async findAll() {
     try {
-      return await this.atencionesService.findAll();
+      const result = await this.atencionesService.findAll();
+      return this.transformBigIntToString(result);
     } catch (error) {
       this.logger.error('Error al obtener atenciones:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -55,7 +63,8 @@ export class AtencionesController {
   })
   async findOne(@Param('id') id: string) {
     try {
-      return await this.atencionesService.findOne(+id);
+      const result = await this.atencionesService.findOne(+id);
+      return this.transformBigIntToString(result);
     } catch (error) {
       this.logger.error('Error al obtener atención:', error);
       throw new HttpException('Atención no encontrada', HttpStatus.NOT_FOUND);
@@ -80,7 +89,7 @@ export class AtencionesController {
   async update(@Param('id') id: string, @Body() updateAtencionDto: UpdateAtencionDto) {
     try {
       const result = await this.atencionesService.update(+id, updateAtencionDto);
-      return result;
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al actualizar atención:', error);
       if (error.message.includes('no encontrada')) {

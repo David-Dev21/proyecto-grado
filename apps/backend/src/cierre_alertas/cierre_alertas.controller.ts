@@ -40,7 +40,7 @@ export class CierreAlertasController {
   async create(@Body() createCierreAlertaDto: CreateCierreAlertaDto) {
     try {
       const result = await this.cierreAlertasService.create(createCierreAlertaDto);
-      return result;
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al crear cierre de alerta:', error);
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -108,7 +108,7 @@ export class CierreAlertasController {
       if (!result) {
         throw new HttpException('Cierre de alerta no encontrado', HttpStatus.NOT_FOUND);
       }
-      return result;
+      return result; // Ya contiene solo el mensaje
     } catch (error) {
       this.logger.error('Error al actualizar cierre de alerta:', error);
       if (error.status === HttpStatus.NOT_FOUND) {

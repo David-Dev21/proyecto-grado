@@ -13,6 +13,7 @@ export class CierreAlertasService {
     try {
       const cierreAlerta = await this.prisma.cierreAlerta.create({
         data: {
+          id_alerta: BigInt(createCierreAlertaDto.id_alerta),
           id_funcionario: createCierreAlertaDto.id_funcionario,
           fecha_hora: new Date(createCierreAlertaDto.fecha_hora),
           comentario: createCierreAlertaDto.comentario,
@@ -20,15 +21,12 @@ export class CierreAlertasService {
           estado_victima: createCierreAlertaDto.estado_victima,
           nombre_agresor: createCierreAlertaDto.nombre_agresor,
           ci_agresor: createCierreAlertaDto.ci_agresor,
-        },
-        include: {
-          alerta: true,
-        },
+        }
       });
 
+      // Solo retornar mensaje de estado sin datos del objeto
       return {
-        ...cierreAlerta,
-        id: cierreAlerta.id.toString(),
+        message: 'Cierre de alerta creado exitosamente'
       };
     } catch (error) {
       this.logger.error('Error al crear cierre de alerta:', error);
@@ -123,17 +121,14 @@ export class CierreAlertasService {
         updateData.ci_agresor = updateCierreAlertaDto.ci_agresor;
       }
 
-      const cierreActualizado = await this.prisma.cierreAlerta.update({
+      await this.prisma.cierreAlerta.update({
         where: { id: BigInt(id) },
-        data: updateData,
-        include: {
-          alerta: true,
-        },
+        data: updateData
       });
 
+      // Solo retornar mensaje de estado sin datos del objeto
       return {
-        ...cierreActualizado,
-        id: cierreActualizado.id.toString(),
+        message: 'Cierre de alerta actualizado exitosamente'
       };
     } catch (error) {
       this.logger.error('Error al actualizar cierre de alerta:', error);

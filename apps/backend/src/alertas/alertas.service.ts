@@ -45,10 +45,10 @@ export class AlertasService {
         });
       }
 
-      // Crear la alerta
+      // Crear la alerta - ahora el ID es autoincrement, no necesitamos pasarlo
       const alerta = await this.prisma.alerta.create({
         data: {
-          id: createAlertaDto.IdAlerta,
+          uuid: createAlertaDto.IdAlerta, // El UUID va en el campo uuid
           id_persona: persona.id,
           fecha_hora: new Date(createAlertaDto.fechaRegistro),
           nro_caso: `CASO-${Date.now()}`, // Generar número de caso único
@@ -68,19 +68,11 @@ export class AlertasService {
         });
       }
 
-      // Retornar la alerta creada con la información relacionada
-      const result = await this.prisma.alerta.findUnique({
-        where: { id: alerta.id },
-        include: {
-          persona: {
-            include: {
-              contactos_ref: true
-            }
-          }
-        }
-      });
-
-      return result;
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        status: true,
+        message: 'Alerta creada exitosamente'
+      };
 
     } catch (error) {
       throw error; // Re-lanzar el error para que el controlador lo maneje
@@ -106,9 +98,12 @@ export class AlertasService {
   }
 
   async findOne(id: string) {
+    // Convertir string a BigInt
+    const bigIntId = BigInt(id);
+    
     const alerta = await this.prisma.alerta.findFirst({
       where: { 
-        id,
+        id: bigIntId,
         deleted_at: null // Solo si no está eliminada
       },
       include: {
@@ -132,10 +127,13 @@ export class AlertasService {
   }
   async update(id: string, updateAlertaDto: UpdateAlertaDto) {
     try {
+      // Convertir string a BigInt
+      const bigIntId = BigInt(id);
+      
       // Verificar que la alerta existe y no está eliminada
       const alertaExistente = await this.prisma.alerta.findFirst({
         where: { 
-          id,
+          id: bigIntId,
           deleted_at: null 
         }
       });
@@ -172,7 +170,7 @@ export class AlertasService {
 
       // Actualizar la alerta
       const alertaActualizada = await this.prisma.alerta.update({
-        where: { id },
+        where: { id: bigIntId },
         data: {
           fecha_hora: updateAlertaDto.fechaRegistro 
             ? new Date(updateAlertaDto.fechaRegistro) 
@@ -209,23 +207,11 @@ export class AlertasService {
         }
       }
 
-      // Retornar la alerta actualizada con sus relaciones
-      const result = await this.prisma.alerta.findUnique({
-        where: { id },
-        include: {
-          persona: {
-            include: {
-              contactos_ref: {
-                where: {
-                  deleted_at: null
-                }
-              }
-            }
-          }
-        }
-      });
-
-      return result;
+      // Solo retornar mensaje de estado sin datos del objeto
+      return {
+        status: true,
+        message: 'Alerta actualizada exitosamente'
+      };
 
     } catch (error) {
       this.logger.error('Error al actualizar alerta:', error);
@@ -234,10 +220,13 @@ export class AlertasService {
   }
   async remove(id: string) {
     try {
+      // Convertir string a BigInt
+      const bigIntId = BigInt(id);
+      
       // Verificar que la alerta existe y no está eliminada
       const alertaExistente = await this.prisma.alerta.findFirst({
         where: { 
-          id,
+          id: bigIntId,
           deleted_at: null 
         }
       });
@@ -248,7 +237,7 @@ export class AlertasService {
 
       // Soft delete de la alerta
       const alertaEliminada = await this.prisma.alerta.update({
-        where: { id },
+        where: { id: bigIntId },
         data: {
           deleted_at: new Date(),
           updated_at: new Date()

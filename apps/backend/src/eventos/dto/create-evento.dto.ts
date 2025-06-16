@@ -14,6 +14,11 @@ class UbicacionDto {
 }
 
 export class CreateEventoDto {
+  @ApiProperty({ example: 'uuid-evento-123-456-789' })
+  @IsString({ message: 'uuid debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'uuid no debe estar vacío' })
+  uuid: string;
+
   @ApiProperty({ example: '29a0c554-7456-4ee6-ae8f-65778d84a838' })
   @IsString({ message: 'id_alerta debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'id_alerta no debe estar vacío' })
