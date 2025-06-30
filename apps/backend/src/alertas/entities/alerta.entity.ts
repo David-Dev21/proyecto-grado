@@ -66,37 +66,36 @@ export class ContactoRefEntity {
 }
 
 export class AlertaEntity {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'ID único de la alerta',
-    example: '29a0c554-7456-4ee6-ae8f-65778d84a838'
+    example: '29a0c554-7456-4ee6-ae8f-65778d84a838',
   })
   id: string;
 
   @ApiProperty({ description: 'ID de la persona relacionada' })
   id_persona: bigint;
 
-  @ApiProperty({ description: 'ID de atención', required: false })
-  id_atencion?: bigint;
-
   @ApiProperty({ description: 'ID del municipio', required: false })
   id_municipio?: string;
-
-  @ApiProperty({ description: 'ID de cierre de alerta', required: false })
-  id_cierre_alerta?: bigint;
 
   @ApiProperty({ description: 'Fecha y hora de la alerta' })
   fecha_hora: Date;
 
-  @ApiProperty({ description: 'Número de caso' })
+  @ApiProperty({ description: 'CUD' })
   nro_caso: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Estado de la alerta',
     enum: EstadoAlerta,
-    example: EstadoAlerta.EN_PELIGRO
+    example: EstadoAlerta.EN_PELIGRO,
   })
   estado: EstadoAlerta;
 
+  @ApiProperty({
+    description: 'Origen de la alerta',
+    example: 'ATT',
+    required: false,
+  })
   @ApiProperty({ description: 'Fecha de creación' })
   created_at: Date;
 
@@ -107,17 +106,17 @@ export class AlertaEntity {
   deleted_at?: Date;
 
   // Relaciones
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Información de la persona relacionada',
     type: PersonaEntity,
-    required: false
+    required: false,
   })
   persona?: PersonaEntity;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Contactos de referencia de la persona',
     type: [ContactoRefEntity],
-    required: false
+    required: false,
   })
   contactos_ref?: ContactoRefEntity[];
 }

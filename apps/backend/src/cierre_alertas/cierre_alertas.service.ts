@@ -36,22 +36,30 @@ export class CierreAlertasService {
 
   async findAll() {
     try {
-      const cierresAlerta = await this.prisma.cierreAlerta.findMany({
+      this.logger.log('Iniciando consulta de cierres de alerta');
+      
+      return await this.prisma.cierreAlerta.findMany({
         where: {
           deleted_at: null,
         },
         include: {
-          alerta: true,
+          alerta: {
+            include: {
+              persona: {
+                select: {
+                  nombres: true,
+                  ap_paterno: true,
+                  ap_materno: true,
+                  ci: true,
+                }
+              }
+            }
+          },
         },
         orderBy: {
           created_at: 'desc',
         },
       });
-
-      return cierresAlerta.map(cierre => ({
-        ...cierre,
-        id: cierre.id.toString(),
-      }));
     } catch (error) {
       this.logger.error('Error al obtener cierres de alerta:', error);
       throw error;
@@ -66,7 +74,18 @@ export class CierreAlertasService {
           deleted_at: null,
         },
         include: {
-          alerta: true,
+          alerta: {
+            include: {
+              persona: {
+                select: {
+                  nombres: true,
+                  ap_paterno: true,
+                  ap_materno: true,
+                  ci: true,
+                }
+              }
+            }
+          },
         },
       });
 
@@ -74,10 +93,7 @@ export class CierreAlertasService {
         return null;
       }
 
-      return {
-        ...cierreAlerta,
-        id: cierreAlerta.id.toString(),
-      };
+      return cierreAlerta;
     } catch (error) {
       this.logger.error('Error al obtener cierre de alerta:', error);
       throw error;

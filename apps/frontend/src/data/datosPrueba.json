@@ -1,0 +1,20 @@
+{
+  "IdAlerta": "29a0c554-7456-4ee6-ae8f-65778d84a838",
+  "fechaRegistro": "2025-05-06 12:30",
+  "persona": {
+    "nombre": "Alicia Flores",
+    "cedulaIdentidad": "12345678-13",
+    "fechaNacimiento": "2001-03-05"
+  },
+  "contacto": {
+    "celular": "71234567",
+    "correo": "victima@correo.xyz"
+  },
+  "contactos": [
+    {
+      "nombre": "Pedro Flores",
+      "relacion": "Papá",
+      "celular": "77654321"
+    }
+  ]
+}

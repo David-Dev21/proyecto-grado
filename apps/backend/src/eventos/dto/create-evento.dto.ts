@@ -1,37 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsDateString, IsNumber } from 'class-validator';
 
-class UbicacionDto {
-  @ApiProperty({ example: -16.5 })
-  @IsNumber({}, { message: 'latitud debe ser un número' })
-  @IsNotEmpty({ message: 'latitud no debe estar vacío' })
-  latitud: number;
-
-  @ApiProperty({ example: -68.15 })
-  @IsNumber({}, { message: 'longitud debe ser un número' })
-  @IsNotEmpty({ message: 'longitud no debe estar vacío' })
-  longitud: number;
-}
-
 export class CreateEventoDto {
-  @ApiProperty({ example: 'uuid-evento-123-456-789' })
-  @IsString({ message: 'uuid debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'uuid no debe estar vacío' })
-  uuid: string;
-
-  @ApiProperty({ example: '29a0c554-7456-4ee6-ae8f-65778d84a838' })
-  @IsString({ message: 'id_alerta debe ser una cadena de texto' })
+  @ApiProperty({ example: 1, description: 'ID numérico de la alerta' })
+  @IsNumber({}, { message: 'id_alerta debe ser un número' })
   @IsNotEmpty({ message: 'id_alerta no debe estar vacío' })
-  id_alerta: string;
+  id_alerta: number;
 
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   @IsString({ message: 'id_funcionario debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'id_funcionario no debe estar vacío' })
   id_funcionario: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'SEG-001',
-    required: false 
+    required: false,
   })
   @IsString({ message: 'id_seguimiento debe ser una cadena de texto' })
   @IsOptional()
@@ -42,11 +25,7 @@ export class CreateEventoDto {
   @IsNotEmpty({ message: 'fecha_hora no debe estar vacío' })
   fecha_hora: string;
 
-  @ApiProperty({ type: UbicacionDto })
-  @IsNotEmpty({ message: 'ubicacion no debe estar vacío' })
-  ubicacion: UbicacionDto;
-
-  @ApiProperty({ example: 'Funcionario arribó al lugar de los hechos' })
+  @ApiProperty({ example: 'Llegamos al lugar del incidente' })
   @IsString({ message: 'comentario debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'comentario no debe estar vacío' })
   comentario: string;

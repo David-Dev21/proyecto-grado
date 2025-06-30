@@ -55,12 +55,18 @@ export class CierreAlertasController {
   })
   async findAll() {
     try {
-      return await this.cierreAlertasService.findAll();
+      this.logger.log('Solicitando todos los cierres de alerta');
+      const result = await this.cierreAlertasService.findAll();
+      this.logger.log(`Devolviendo ${result.length} cierres de alerta`);
+      return result;
     } catch (error) {
-      this.logger.error('Error al obtener cierres de alerta:', error);
-      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error en controlador al obtener cierres de alerta:', error);
+      this.logger.error('Error message:', error.message);
+      this.logger.error('Error stack:', error.stack);
+      throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Get(':id')
+  }  
+  @Get(':id')
   @ApiCreatedResponse({ type: CierreAlerta })
   @ApiOperation({ summary: 'Obtener un cierre de alerta por ID' })
   @ApiParam({ name: 'id', type: 'number' })

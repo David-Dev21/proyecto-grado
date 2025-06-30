@@ -7,5 +7,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
   controllers: [AtencionesController],
   providers: [AtencionesService],
   imports: [PrismaModule],
+  exports: [AtencionesService], // Exportar el servicio
 })
 export class AtencionesModule {}

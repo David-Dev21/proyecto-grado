@@ -3,7 +3,7 @@ import { ApiTags, ApiResponse, ApiOperation, ApiBody, ApiCreatedResponse } from 
 import { AtencionesService } from './atenciones.service';
 import { CreateAtencionDto } from './dto/create-atencion.dto';
 import { UpdateAtencionDto } from './dto/update-atencion.dto';
-import { Atencion } from './entities/atencion.entity';
+import { AtencionEntity, AtencionAlertaEntity } from './entities/atencion.entity';
 
 @ApiTags('atenciones')
 @Controller('atenciones')
@@ -17,8 +17,10 @@ export class AtencionesController {
     return JSON.parse(JSON.stringify(obj, (key, value) =>
       typeof value === 'bigint' ? value.toString() : value
     ));
-  }  @Post()
-  @ApiOperation({ summary: 'Crear nueva atención' })@ApiResponse({ 
+  }  
+  @Post()
+  @ApiOperation({ summary: 'Crear nueva atención' })
+  @ApiResponse({ 
     status: HttpStatus.CREATED,
     description: 'La atención ha sido creada exitosamente.'
   })
@@ -38,8 +40,9 @@ export class AtencionesController {
       this.logger.error('Error al crear atención:', error);
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Get()
-  @ApiCreatedResponse({ type: Atencion, isArray: true })
+  }  
+  @Get()
+  @ApiCreatedResponse({ type: AtencionEntity, isArray: true })
   @ApiOperation({ summary: 'Obtener todas las atenciones' })
   @ApiResponse({ 
     status: HttpStatus.OK 
@@ -52,8 +55,26 @@ export class AtencionesController {
       this.logger.error('Error al obtener atenciones:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Get(':id')
-  @ApiCreatedResponse({ type: Atencion })
+  }  
+  @Get('con-alertas')
+  @ApiCreatedResponse({ type: AtencionAlertaEntity, isArray: true })
+  @ApiOperation({ summary: 'Obtener todas las atenciones con número de caso de alerta' })
+  @ApiResponse({ 
+    status: HttpStatus.OK,
+    description: 'Lista de atenciones con número de caso de alerta asociada',
+    type: [AtencionAlertaEntity]
+  })
+  async findAllWithAlertas() {
+    try {
+      const result = await this.atencionesService.findAllWithAlerts();
+      return this.transformBigIntToString(result);
+    } catch (error) {
+      this.logger.error('Error al obtener atenciones con alertas:', error);
+      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }  
+  @Get(':id')
+  @ApiCreatedResponse({ type: AtencionEntity })
   @ApiOperation({ summary: 'Obtener una atención por ID' })
   @ApiResponse({ 
     status: HttpStatus.OK 
@@ -69,7 +90,8 @@ export class AtencionesController {
       this.logger.error('Error al obtener atención:', error);
       throw new HttpException('Atención no encontrada', HttpStatus.NOT_FOUND);
     }
-  }  @Patch(':id')
+  }  
+  @Patch(':id')
   @ApiOperation({ summary: 'Actualizar una atención' })
   @ApiBody({ 
     type: UpdateAtencionDto,

@@ -9,13 +9,17 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "baseUrl": ".",
+    "paths": {
+      "@my-monorepo/types": ["./packages/types/src"], // Mapea el nombre del paquete a su carpeta fuente
+      "@my-monorepo/types/*": ["./packages/types/src/*"] // Permite subrutas si las tienes
+    }
   }
 }

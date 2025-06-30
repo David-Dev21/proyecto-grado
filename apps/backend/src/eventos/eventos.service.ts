@@ -11,72 +11,71 @@ export class EventosService {
 
   async create(createEventoDto: CreateEventoDto) {
     try {
-      // Convertir la ubicación a formato POINT de PostgreSQL
-      const ubicacionPoint = `POINT(${createEventoDto.ubicacion.longitud} ${createEventoDto.ubicacion.latitud})`;
-      
-      // Crear el evento usando executeRaw para manejar la geometría
-      const result = await this.prisma.$executeRaw`
-        INSERT INTO eventos (uuid, id_alerta, id_funcionario, id_seguimiento, fecha_hora, ubicacion, comentario, created_at, updated_at)
-        VALUES (${createEventoDto.uuid}, ${BigInt(createEventoDto.id_alerta)}, ${createEventoDto.id_funcionario}, ${createEventoDto.id_seguimiento || null}, ${new Date(createEventoDto.fecha_hora)}, ST_GeomFromText(${ubicacionPoint}, 4326), ${createEventoDto.comentario}, NOW(), NOW())
-      `;
-
-      if (result === 0) {
-        throw new BadRequestException('No se pudo crear el evento');
-      }
-
-      // Solo retornar mensaje de estado sin datos del objeto
+      // Crear el evento usando Prisma ORM directamente
+      const evento = await this.prisma.evento.create({
+        data: {
+          id_alerta: BigInt(createEventoDto.id_alerta),
+          id_funcionario: createEventoDto.id_funcionario,
+          id_seguimiento: createEventoDto.id_seguimiento || null,
+          fecha_hora: new Date(createEventoDto.fecha_hora),
+          comentario: createEventoDto.comentario,
+        },
+        select: {
+          id: true,
+          id_alerta: true,
+          id_funcionario: true,
+          id_seguimiento: true,
+          fecha_hora: true,
+          comentario: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
       return {
-        message: 'Evento creado exitosamente'
+        message: 'Evento creado exitosamente',
       };
     } catch (error) {
-      this.logger.error('Error al crear evento', error.stack);
+      this.logger.error('Error detallado al crear evento:', error);
       if (error.code === 'P2003') {
         throw new BadRequestException('La alerta especificada no existe');
       }
-      throw new BadRequestException('Error al crear el evento');
+      throw new BadRequestException(`Error al crear el evento: ${error.message}`);
     }
   }
 
   async findAll() {
     try {
-      const eventos = await this.prisma.$queryRaw<any[]>`
-        SELECT 
-          e.id,
-          e.uuid,
-          e.id_alerta,
-          e.id_funcionario,
-          e.id_seguimiento,
-          e.fecha_hora,
-          ST_X(e.ubicacion) as longitud,
-          ST_Y(e.ubicacion) as latitud,
-          e.comentario,
-          e.created_at,
-          e.updated_at,
-          e.deleted_at,
-          json_build_object(
-            'id', a.id,
-            'id_persona', a.id_persona,
-            'tipo_alerta', a.tipo_alerta,
-            'descripcion', a.descripcion,
-            'estado', a.estado
-          ) as alerta
-        FROM eventos e
-        LEFT JOIN alertas a ON e.id_alerta = a.id
-        WHERE e.deleted_at IS NULL
-        ORDER BY e.created_at DESC
-      `;
+      this.logger.log('Iniciando consulta de eventos');
 
-      // Formatear la respuesta
-      const eventosFormateados = eventos.map((evento: any) => ({
-        ...evento,
-        id: evento.id.toString(),
-        ubicacion: {
-          latitud: parseFloat(evento.latitud),
-          longitud: parseFloat(evento.longitud),
+      return await this.prisma.evento.findMany({
+        where: {
+          deleted_at: null,
         },
-        latitud: undefined,
-        longitud: undefined,
-      }));      return eventosFormateados;
+        select: {
+          id: true,
+          id_alerta: true,
+          id_funcionario: true,
+          id_seguimiento: true,
+          fecha_hora: true,
+          comentario: true,
+          created_at: true,
+          updated_at: true,
+          deleted_at: true,
+          alerta: {
+            select: {
+              id: true,
+              uuid: true,
+              id_persona: true,
+              nro_caso: true,
+              estado: true,
+              fecha_hora: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
     } catch (error) {
       this.logger.error('Error al obtener eventos', error.stack);
       throw new BadRequestException('Error al obtener los eventos');
@@ -85,47 +84,39 @@ export class EventosService {
 
   async findOne(id: number) {
     try {
-      const eventos = await this.prisma.$queryRaw<any[]>`
-        SELECT 
-          e.id,
-          e.uuid,
-          e.id_alerta,
-          e.id_funcionario,
-          e.id_seguimiento,
-          e.fecha_hora,
-          ST_X(e.ubicacion) as longitud,
-          ST_Y(e.ubicacion) as latitud,
-          e.comentario,
-          e.created_at,
-          e.updated_at,
-          e.deleted_at,
-          json_build_object(
-            'id', a.id,
-            'id_persona', a.id_persona,
-            'tipo_alerta', a.tipo_alerta,
-            'descripcion', a.descripcion,
-            'estado', a.estado
-          ) as alerta
-        FROM eventos e
-        LEFT JOIN alertas a ON e.id_alerta = a.id
-        WHERE e.id = ${BigInt(id)} AND e.deleted_at IS NULL
-      `;
+      const evento = await this.prisma.evento.findFirst({
+        where: {
+          id: BigInt(id),
+          deleted_at: null,
+        },
+        select: {
+          id: true,
+          id_alerta: true,
+          id_funcionario: true,
+          id_seguimiento: true,
+          fecha_hora: true,
+          comentario: true,
+          created_at: true,
+          updated_at: true,
+          deleted_at: true,
+          alerta: {
+            select: {
+              id: true,
+              uuid: true,
+              id_persona: true,
+              nro_caso: true,
+              estado: true,
+              fecha_hora: true,
+            },
+          },
+        },
+      });
 
-      if (!eventos || eventos.length === 0) {
+      if (!evento) {
         throw new NotFoundException('Evento no encontrado');
       }
 
-      const eventoData = eventos[0];
-      const eventoFormateado = {
-        ...eventoData,
-        id: eventoData.id.toString(),
-        ubicacion: {
-          latitud: parseFloat(eventoData.latitud),
-          longitud: parseFloat(eventoData.longitud),
-        },
-        latitud: undefined,
-        longitud: undefined,
-      };      return eventoFormateado;
+      return evento;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -146,42 +137,43 @@ export class EventosService {
         throw new NotFoundException('Evento no encontrado');
       }
 
-      // Construir la consulta de actualización dinámicamente
-      let updateQuery = 'UPDATE eventos SET updated_at = NOW()';
+      // Construir los campos dinámicamente para la actualización
+      const updateFields: string[] = [];
       const values: any[] = [];
-      
+
       if (updateEventoDto.id_alerta) {
-        updateQuery += ', id_alerta = $' + (values.length + 1);
+        updateFields.push('id_alerta = ?');
         values.push(BigInt(updateEventoDto.id_alerta));
       }
       if (updateEventoDto.id_funcionario) {
-        updateQuery += ', id_funcionario = $' + (values.length + 1);
+        updateFields.push('id_funcionario = ?');
         values.push(updateEventoDto.id_funcionario);
       }
       if (updateEventoDto.id_seguimiento !== undefined) {
-        updateQuery += ', id_seguimiento = $' + (values.length + 1);
+        updateFields.push('id_seguimiento = ?');
         values.push(updateEventoDto.id_seguimiento);
       }
       if (updateEventoDto.fecha_hora) {
-        updateQuery += ', fecha_hora = $' + (values.length + 1);
+        updateFields.push('fecha_hora = ?');
         values.push(new Date(updateEventoDto.fecha_hora));
       }
       if (updateEventoDto.comentario) {
-        updateQuery += ', comentario = $' + (values.length + 1);
+        updateFields.push('comentario = ?');
         values.push(updateEventoDto.comentario);
       }
-      if (updateEventoDto.ubicacion) {
-        const ubicacionPoint = `POINT(${updateEventoDto.ubicacion.longitud} ${updateEventoDto.ubicacion.latitud})`;
-        updateQuery += ', ubicacion = ST_GeomFromText($' + (values.length + 1) + ', 4326)';
-        values.push(ubicacionPoint);
+
+      // Solo actualizar si hay campos para actualizar
+      if (updateFields.length > 0) {
+        updateFields.push('updated_at = NOW()');
+
+        const query = `UPDATE eventos SET ${updateFields.join(', ')} WHERE id = ?`;
+        values.push(BigInt(id));
+
+        await this.prisma.$executeRawUnsafe(query, ...values);
       }
 
-      updateQuery += ' WHERE id = $' + (values.length + 1);
-      values.push(BigInt(id));      await this.prisma.$executeRawUnsafe(updateQuery, ...values);
-
-      // Solo retornar mensaje de estado sin datos del objeto
       return {
-        message: 'Evento actualizado exitosamente'
+        message: 'Evento actualizado exitosamente',
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -204,7 +196,9 @@ export class EventosService {
 
       if (!eventoExistente || eventoExistente.length === 0) {
         throw new NotFoundException('Evento no encontrado');
-      }      // Soft delete
+      }
+
+      // Soft delete
       await this.prisma.$executeRaw`
         UPDATE eventos SET deleted_at = NOW() WHERE id = ${BigInt(id)}
       `;

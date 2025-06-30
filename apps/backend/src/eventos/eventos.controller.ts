@@ -53,10 +53,15 @@ export class EventosController {
   })
   async findAll() {
     try {
-      return await this.eventosService.findAll();
+      this.logger.log('Solicitando todos los eventos');
+      const result = await this.eventosService.findAll();
+      this.logger.log(`Devolviendo ${result.length} eventos`);
+      return result;
     } catch (error) {
       this.logger.error('Error al obtener eventos:', error);
-      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('Error message:', error.message);
+      this.logger.error('Error stack:', error.stack);
+      throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }  @Get(':id')
   @ApiCreatedResponse({ type: Evento })
