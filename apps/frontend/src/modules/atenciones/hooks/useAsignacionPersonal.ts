@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import personalPolicialData from '@/data/personalPolicial.json';
+import { funcionariosService } from '@/modules/funcionarios/services/funcionarioService';
+import { FuncionarioBackend, formatFuncionarioName } from '@/modules/funcionarios/types/Funcionario';
 
 interface PersonalPolicial {
-  uuid: string;
+  id: string;
   nombre: string;
   grado: string;
 }
@@ -63,18 +64,25 @@ export function useAsignacionPersonal({
   const [isLoadingPersonal, setIsLoadingPersonal] = useState(false);
   const [errorPersonal, setErrorPersonal] = useState<string>('');
 
-  // Función para obtener la lista de personal policial (simulada con datos locales)
+  // Función para obtener la lista de personal policial desde el endpoint
   const fetchPersonalPolicial = async () => {
     setIsLoadingPersonal(true);
     setErrorPersonal('');
     try {
-      // Simular delay de red
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setPersonalPolicial(personalPolicialData);
+      const funcionarios = await funcionariosService.getAll();
+
+      // Transformar funcionarios a formato PersonalPolicial
+      const personalTransformado: PersonalPolicial[] = funcionarios.map((funcionario) => ({
+        id: funcionario.id,
+        nombre: formatFuncionarioName(funcionario),
+        grado: funcionario.grado,
+      }));
+
+      setPersonalPolicial(personalTransformado);
     } catch (error: any) {
       console.error('Error al cargar el personal policial:', error);
       setPersonalPolicial([]);
-      setErrorPersonal('Error al cargar el personal policial');
+      setErrorPersonal('Error al cargar el personal policial desde el servidor');
     } finally {
       setIsLoadingPersonal(false);
     }
@@ -87,10 +95,10 @@ export function useAsignacionPersonal({
     }
   }, [isDialogOpen]);
 
-  // Función para encontrar un funcionario por uuid a partir de su nombre
+  // Función para encontrar un funcionario por ID a partir de su nombre
   const findFuncionarioByName = (nombreCompleto: string): string | null => {
-    const funcionario = personalPolicial.find((p) => `${p.grado} ${p.nombre}` === nombreCompleto);
-    return funcionario ? funcionario.uuid : null;
+    const funcionario = personalPolicial.find((p) => p.nombre === nombreCompleto);
+    return funcionario ? funcionario.id : null;
   };
 
   // Funciones para manejar el formulario
@@ -146,6 +154,7 @@ export function useAsignacionPersonal({
     errorPersonal,
     onSubmit,
     handleCancel,
+    refetchPersonal: fetchPersonalPolicial,
   };
 }
 

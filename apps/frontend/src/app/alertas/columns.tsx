@@ -18,6 +18,24 @@ import {
 import Link from 'next/link';
 import { AlertaBackend } from '@/modules/alertas/types/Alerta';
 
+// Función auxiliar para calcular tiempo transcurrido
+function getTimeElapsed(fechaHora: string): string {
+  const now = new Date();
+  const fecha = new Date(fechaHora);
+  const diffMs = now.getTime() - fecha.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) {
+    return `${diffDays} día${diffDays > 1 ? 's' : ''}`;
+  } else if (diffHours > 0) {
+    return `${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  } else {
+    return `${diffMinutes} minuto${diffMinutes > 1 ? 's' : ''}`;
+  }
+}
+
 export const columns: ColumnDef<AlertaBackend>[] = [
   {
     id: 'select',
@@ -106,17 +124,23 @@ export const columns: ColumnDef<AlertaBackend>[] = [
     },
     cell: ({ row }) => {
       const fechaHora = new Date(row.getValue('fecha_hora'));
+      const timeElapsed = getTimeElapsed(row.getValue('fecha_hora'));
       return (
         <div className="flex items-center space-x-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <div>
-            <div className="font-medium">{fechaHora.toLocaleDateString('es-ES')}</div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm">
+              {fechaHora.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+              })}{' '}
               {fechaHora.toLocaleTimeString('es-ES', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
             </div>
+            <div className="text-xs text-muted-foreground">hace {timeElapsed}</div>
           </div>
         </div>
       );

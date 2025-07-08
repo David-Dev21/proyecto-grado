@@ -6,7 +6,7 @@ export class CudService {
     // Usar timestamp más un número aleatorio para evitar colisiones
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
-    return `CASO-${timestamp}-${random}`;
+    return `CUD-${timestamp}-${random}`;
   }
 
   // Método alternativo con formato más legible

@@ -2,12 +2,10 @@ import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AppSidebar } from '@/components/app-sidebar';
 import { Toaster } from '@/components/ui/sonner';
 
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import AlertaPantalla from '@/modules/alertas/components/AlertaPantalla';
 import { AuthHydrationProvider } from '@/components/AuthHydrationProvider';
+import LayoutWrapper from '@/components/LayoutWrapper';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,12 +32,8 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthHydrationProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset>{children}</SidebarInset>
-            </SidebarProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
             <Toaster />
-            <AlertaPantalla />
           </ThemeProvider>
         </AuthHydrationProvider>
       </body>

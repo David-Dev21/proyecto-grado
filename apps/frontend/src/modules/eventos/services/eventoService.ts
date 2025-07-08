@@ -2,9 +2,18 @@ import { EventoBackend } from '../types/Evento';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Interface que coincide exactamente con el DTO del backend
+export interface CreateEventoDto {
+  id_alerta: number;
+  id_funcionario: string;
+  id_seguimiento?: string;
+  fecha_hora: string;
+  comentario: string;
+}
+
 export class ApiError extends Error {
   status: number;
-  
+
   constructor(message: string, status: number) {
     super(message);
     this.name = 'ApiError';
@@ -14,7 +23,7 @@ export class ApiError extends Error {
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
@@ -25,10 +34,7 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
     });
 
     if (!response.ok) {
-      throw new ApiError(
-        `Error ${response.status}: ${response.statusText}`,
-        response.status
-      );
+      throw new ApiError(`Error ${response.status}: ${response.statusText}`, response.status);
     }
 
     return await response.json();
@@ -36,12 +42,9 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
     if (error instanceof ApiError) {
       throw error;
     }
-    
+
     // Error de red o conexión
-    throw new ApiError(
-      'Error de conexión con el servidor',
-      0
-    );
+    throw new ApiError('Error de conexión con el servidor', 0);
   }
 }
 
@@ -63,7 +66,7 @@ export const eventosService = {
   /**
    * Crea un nuevo evento
    */
-  async create(data: Partial<EventoBackend>): Promise<{ message: string }> {
+  async create(data: CreateEventoDto): Promise<{ message: string }> {
     return fetchApi<{ message: string }>('/eventos', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -94,7 +97,7 @@ export const eventosService = {
    */
   async getByAlerta(alertaId: string): Promise<EventoBackend[]> {
     const allEventos = await this.getAll();
-    return allEventos.filter(evento => evento.id_alerta === alertaId);
+    return allEventos.filter((evento) => evento.id_alerta === alertaId);
   },
 
   /**
@@ -102,7 +105,7 @@ export const eventosService = {
    */
   async getByFuncionario(funcionarioId: string): Promise<EventoBackend[]> {
     const allEventos = await this.getAll();
-    return allEventos.filter(evento => evento.id_funcionario === funcionarioId);
+    return allEventos.filter((evento) => evento.id_funcionario === funcionarioId);
   },
 
   /**
@@ -112,10 +115,10 @@ export const eventosService = {
     const allEventos = await this.getAll();
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    return allEventos.filter(evento => {
+
+    return allEventos.filter((evento) => {
       const eventoDate = new Date(evento.fecha_hora);
       return eventoDate >= yesterday;
     });
-  }
+  },
 };

@@ -17,15 +17,15 @@ export class BigIntInterceptor implements NestInterceptor {
 
   private transformBigInt(obj: any): any {
     if (obj === null || obj === undefined) return obj;
-    
+
     if (typeof obj === 'bigint') {
       return obj.toString();
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => this.transformBigInt(item));
+      return obj.map((item) => this.transformBigInt(item));
     }
-    
+
     if (typeof obj === 'object' && obj.constructor === Object) {
       const transformed: any = {};
       for (const key in obj) {
@@ -35,7 +35,7 @@ export class BigIntInterceptor implements NestInterceptor {
       }
       return transformed;
     }
-    
+
     return obj;
   }
 }
@@ -55,16 +55,18 @@ async function bootstrap() {
   });
 
   // Habilitar validación global
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    disableErrorMessages: false,
-    validationError: {
-      target: false,
-      value: false,
-    },
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      disableErrorMessages: false,
+      validationError: {
+        target: false,
+        value: false,
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('Sistema de Alertas API')
@@ -74,9 +76,8 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-  
+
   // Cambiar puerto a 3001 para no conflictar con Next.js
   await app.listen(process.env.PORT ?? 3001);
-
 }
 void bootstrap();

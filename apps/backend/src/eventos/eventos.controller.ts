@@ -22,19 +22,20 @@ import { Evento } from './entities/evento.entity';
 export class EventosController {
   private readonly logger = new Logger(EventosController.name);
 
-  constructor(private readonly eventosService: EventosService) { }  @Post()
+  constructor(private readonly eventosService: EventosService) {}
+  @Post()
   @ApiOperation({ summary: 'Crear un nuevo evento' })
-  @ApiResponse({ 
-    status: HttpStatus.CREATED, 
-    description: 'Evento creado exitosamente' 
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Evento creado exitosamente',
   })
-  @ApiResponse({ 
-    status: HttpStatus.BAD_REQUEST, 
-    description: 'Datos inválidos' 
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Datos inválidos',
   })
-  @ApiResponse({ 
-    status: HttpStatus.INTERNAL_SERVER_ERROR, 
-    description: 'Error interno del servidor' 
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Error interno del servidor',
   })
   async create(@Body() createEventoDto: CreateEventoDto) {
     try {
@@ -44,12 +45,13 @@ export class EventosController {
       this.logger.error('Error al crear evento:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Get()
+  }
+  @Get()
   @ApiCreatedResponse({ type: Evento, isArray: true })
   @ApiOperation({ summary: 'Obtener todos los eventos' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Lista de eventos obtenida exitosamente' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Lista de eventos obtenida exitosamente',
   })
   async findAll() {
     try {
@@ -63,17 +65,18 @@ export class EventosController {
       this.logger.error('Error stack:', error.stack);
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Get(':id')
+  }
+  @Get(':id')
   @ApiCreatedResponse({ type: Evento })
   @ApiOperation({ summary: 'Obtener un evento por ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'ID del evento' })
-  @ApiResponse({ 
-    status: HttpStatus.OK, 
-    description: 'Evento obtenido exitosamente' 
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Evento obtenido exitosamente',
   })
-  @ApiResponse({ 
-    status: HttpStatus.NOT_FOUND, 
-    description: 'Evento no encontrado' 
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Evento no encontrado',
   })
   async findOne(@Param('id', ParseIntPipe) id: number) {
     try {
@@ -89,16 +92,14 @@ export class EventosController {
       }
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Patch(':id')
+  }
+  @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un evento' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Evento actualizado exitosamente' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Datos inválidos' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Evento no encontrado' })
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateEventoDto: UpdateEventoDto,
-  ) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() updateEventoDto: UpdateEventoDto) {
     try {
       const result = await this.eventosService.update(id, updateEventoDto);
       return result; // Ya contiene solo el mensaje
@@ -109,7 +110,8 @@ export class EventosController {
       }
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  @Delete(':id')
+  }
+  @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un evento (soft delete)' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Evento eliminado exitosamente' })
@@ -127,6 +129,34 @@ export class EventosController {
         throw error;
       }
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post(':id/enviar-att')
+  @ApiOperation({ summary: 'Enviar evento al sistema ATT' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Evento enviado a ATT exitosamente',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Evento no encontrado',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Error al enviar a ATT',
+  })
+  async enviarAATT(@Param('id', ParseIntPipe) id: number) {
+    try {
+      const result = await this.eventosService.enviarAATT(id);
+      return result;
+    } catch (error) {
+      this.logger.error('Error al enviar evento a ATT:', error);
+      if (error.status === HttpStatus.NOT_FOUND) {
+        throw error;
+      }
+      throw new HttpException('Error al enviar evento a ATT', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

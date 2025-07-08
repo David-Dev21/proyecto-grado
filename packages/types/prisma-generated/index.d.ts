@@ -14534,6 +14534,7 @@ export namespace Prisma {
 
   export type UbicacionAlertaWhereUniqueInput = Prisma.AtLeast<{
     id?: bigint | number
+    unique_ubicacion_alerta?: UbicacionAlertaUnique_ubicacion_alertaCompoundUniqueInput
     AND?: UbicacionAlertaWhereInput | UbicacionAlertaWhereInput[]
     OR?: UbicacionAlertaWhereInput[]
     NOT?: UbicacionAlertaWhereInput | UbicacionAlertaWhereInput[]
@@ -14545,7 +14546,7 @@ export namespace Prisma {
     updated_at?: DateTimeFilter<"UbicacionAlerta"> | Date | string
     deleted_at?: DateTimeNullableFilter<"UbicacionAlerta"> | Date | string | null
     alerta?: XOR<AlertaScalarRelationFilter, AlertaWhereInput>
-  }, "id">
+  }, "id" | "unique_ubicacion_alerta">
 
   export type UbicacionAlertaOrderByWithAggregationInput = {
     id?: SortOrder
@@ -16234,6 +16235,13 @@ export namespace Prisma {
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type UbicacionAlertaUnique_ubicacion_alertaCompoundUniqueInput = {
+    id_alerta: bigint | number
+    fecha_hora: Date | string
+    latitud: Decimal | DecimalJsLike | number | string
+    longitud: Decimal | DecimalJsLike | number | string
   }
 
   export type UbicacionAlertaCountOrderByAggregateInput = {

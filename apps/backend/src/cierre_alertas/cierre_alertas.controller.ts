@@ -1,15 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  HttpStatus,
-  HttpException,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpException, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiCreatedResponse } from '@nestjs/swagger';
 import { CierreAlertasService } from './cierre_alertas.service';
 import { CreateCierreAlertaDto } from './dto/create-cierre_alerta.dto';
@@ -65,7 +54,7 @@ export class CierreAlertasController {
       this.logger.error('Error stack:', error.stack);
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }  
+  }
   @Get(':id')
   @ApiCreatedResponse({ type: CierreAlerta })
   @ApiOperation({ summary: 'Obtener un cierre de alerta por ID' })
@@ -147,6 +136,34 @@ export class CierreAlertasController {
         throw error;
       }
       throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post(':id/enviar-att')
+  @ApiOperation({ summary: 'Enviar cierre de alerta al sistema ATT' })
+  @ApiParam({ name: 'id', type: 'number' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Cierre enviado a ATT exitosamente',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Cierre de alerta no encontrado',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Error al enviar a ATT',
+  })
+  async enviarAATT(@Param('id') id: string) {
+    try {
+      const result = await this.cierreAlertasService.enviarAATT(+id);
+      return result;
+    } catch (error) {
+      this.logger.error('Error al enviar cierre a ATT:', error);
+      if (error.status === HttpStatus.NOT_FOUND) {
+        throw error;
+      }
+      throw new HttpException('Error al enviar cierre a ATT', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

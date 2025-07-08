@@ -18,8 +18,6 @@ import { CreateAlertaDto } from './dto/create-alerta.dto';
 import { UpdateAlertaDto } from './dto/update-alerta.dto';
 import { AtencionesService } from 'src/atenciones/atenciones.service';
 import { ServicioProcesadorUbicacion } from './services/ubicacion.service';
-import { ServicioNotificacionAlerta } from './interfaces/notificacion.interface';
-import { SERVICIO_NOTIFICACION } from './constants/injection-tokens';
 
 @ApiTags('alertas')
 @Controller('alertas')
@@ -30,7 +28,6 @@ export class AlertasController {
     private readonly alertasService: AlertasService,
     private readonly atencionesService: AtencionesService,
     private readonly servicioProcesamientoUbicacion: ServicioProcesadorUbicacion,
-    @Inject(SERVICIO_NOTIFICACION) private readonly servicioNotificacion: ServicioNotificacionAlerta,
   ) {}
 
   @Post()
@@ -54,13 +51,9 @@ export class AlertasController {
       const uuidAlerta = result.uuid;
 
       if (uuidAlerta) {
-        this.logger.log(`Alerta creada con UUID ${uuidAlerta}. Procesando ubicación y notificando al frontend...`);
-        // Obtener la alerta completa con datos de la persona
-        const alertaCompleta = await this.alertasService.findOne(uuidAlerta);
-        // Crear objeto simplificado para notificación
-        const alertaSimplificada = this.createSimplifiedAlert(alertaCompleta);
-        // Notificar al frontend
-        this.servicioNotificacion.notificarAlertaCreada(alertaSimplificada);
+        this.logger.log(`Alerta creada con UUID ${uuidAlerta}. Notificando y procesando ubicación...`);
+        // Notificar nueva alerta al frontend
+        await this.servicioProcesamientoUbicacion.notificarNuevaAlerta(uuidAlerta);
         // Procesar ubicación de forma asíncrona
         this.servicioProcesamientoUbicacion.procesarUbicacionParaAlerta(uuidAlerta);
       }
@@ -69,19 +62,6 @@ export class AlertasController {
     } catch (error) {
       return this.handleDatabaseError(error);
     }
-  }
-
-  private createSimplifiedAlert(alertaCompleta: any) {
-    return {
-      uuid: alertaCompleta.uuid,
-      fecha_hora: alertaCompleta.fecha_hora,
-      estado: alertaCompleta.estado,
-      persona: {
-        nombres: alertaCompleta.persona?.nombres || 'Sin nombre',
-        ci: alertaCompleta.persona?.ci || 'Sin CI',
-        celular: alertaCompleta.persona?.celular || 'Sin teléfono',
-      },
-    };
   }
 
   private handleDatabaseError(error: any) {

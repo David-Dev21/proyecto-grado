@@ -70,17 +70,40 @@ export const useAuthStore = create<AuthStore>()(
       isHydrated: false,
 
       // Acciones
-      setToken: (token: string | null) =>
+      setToken: (token: string | null) => {
         set((state) => ({
           token,
           isAuthenticated: !!token && !!state.userData,
-        })),
+        }));
 
-      setUserData: (userData: UserData | null) =>
+        // Guardar token en localStorage
+        if (typeof window !== 'undefined') {
+          if (token) {
+            localStorage.setItem('authToken', token);
+            // También en cookie para middleware
+            document.cookie = `authToken=${token}; path=/; max-age=${7 * 24 * 60 * 60}; secure; samesite=strict`;
+          } else {
+            localStorage.removeItem('authToken');
+            document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          }
+        }
+      },
+
+      setUserData: (userData: UserData | null) => {
         set((state) => ({
           userData,
           isAuthenticated: !!state.token && !!userData,
-        })),
+        }));
+
+        // Guardar userData en sessionStorage
+        if (typeof window !== 'undefined') {
+          if (userData) {
+            sessionStorage.setItem('userData', JSON.stringify(userData));
+          } else {
+            sessionStorage.removeItem('userData');
+          }
+        }
+      },
 
       setRoles: (roles: RoleData[]) =>
         set((state) => ({
@@ -97,25 +120,61 @@ export const useAuthStore = create<AuthStore>()(
           systemData: state.systemData ? { ...state.systemData, permissions } : { name: '', roles: [], modules: [], permissions },
         })),
 
-      setSystemData: (systemData: SystemData | null) => set({ systemData }),
+      setSystemData: (systemData: SystemData | null) => {
+        set({ systemData });
 
-      logout: () =>
+        // Guardar systemData en sessionStorage
+        if (typeof window !== 'undefined') {
+          if (systemData) {
+            sessionStorage.setItem('systemData', JSON.stringify(systemData));
+          } else {
+            sessionStorage.removeItem('systemData');
+          }
+        }
+      },
+
+      logout: () => {
         set({
           token: null,
           userData: null,
           systemData: null,
           isAuthenticated: false,
-        }),
+        });
 
-      setHydrated: () => set({ isHydrated: true }),
+        // Limpiar storages
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('authToken');
+          sessionStorage.removeItem('userData');
+          sessionStorage.removeItem('systemData');
+          document.cookie = 'authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
+      },
+
+      setHydrated: () => {
+        set({ isHydrated: true });
+
+        // Cargar datos desde storages al hidratar
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('authToken');
+          const userData = sessionStorage.getItem('userData');
+          const systemData = sessionStorage.getItem('systemData');
+
+          if (token || userData || systemData) {
+            set({
+              token: token || null,
+              userData: userData ? JSON.parse(userData) : null,
+              systemData: systemData ? JSON.parse(systemData) : null,
+              isAuthenticated: !!(token && userData),
+            });
+          }
+        }
+      },
     }),
     {
       name: 'auth-store',
+      // Solo persistir isHydrated en Zustand
       partialize: (state) => ({
-        token: state.token,
-        userData: state.userData,
-        systemData: state.systemData,
-        isAuthenticated: state.isAuthenticated,
+        isHydrated: state.isHydrated,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

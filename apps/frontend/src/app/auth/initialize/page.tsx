@@ -33,9 +33,6 @@ export default function InicializaPage() {
           throw new Error('Datos de autenticación incompletos');
         }
 
-        // Guardar los datos en localStorage (para persistencia)
-        localStorage.setItem('authToken', authData.access_token);
-
         const userData = {
           name: authData.userData.name,
           lastName: authData.userData.lastName,
@@ -50,7 +47,6 @@ export default function InicializaPage() {
           lastAccess: authData.userData.lastAccess,
           unidad: authData.userData.unidad,
         };
-        localStorage.setItem('userData', JSON.stringify(userData));
 
         const systemData = {
           name: authData.systemData.name,
@@ -58,7 +54,6 @@ export default function InicializaPage() {
           modules: authData.systemData.modules,
           permissions: authData.systemData.permissions,
         };
-        localStorage.setItem('systemData', JSON.stringify(systemData));
 
         // Actualizar el store de Zustand inmediatamente
         setToken(authData.access_token);

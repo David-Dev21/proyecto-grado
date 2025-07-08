@@ -1,6 +1,18 @@
 // Importar tipos de Prisma desde el paquete compartido
 import type { Atencion as PrismaAtencion, Alerta as PrismaAlerta } from '@alertas/types';
 
+// Tipo para crear una nueva atención (coincide con el DTO del backend)
+export interface CreateAtencionDto {
+  id_alerta: number;
+  usuario_despachador: string;
+  id_vehiculo: string;
+  sigla_radio?: string;
+  funcionarios: Array<{
+    id_funcionario?: string;
+    encargado: boolean;
+  }>;
+}
+
 // Tipos backend que convierten BigInt a string para la API
 export interface AtencionFuncionarioBackend {
   id: string;
@@ -53,7 +65,7 @@ export function formatDateTime(dateTime: string): string {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -66,4 +78,19 @@ export function getAtencionStatus(atencion: AtencionBackend): 'activa' | 'comple
     return 'activa';
   }
   return 'pendiente';
+}
+
+// Función auxiliar para calcular tiempo transcurrido desde la atención
+export function getTimeElapsed(fechaHora: string): string {
+  const now = new Date();
+  const atencionDate = new Date(fechaHora);
+  const diffMs = now.getTime() - atencionDate.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 0) {
+    return `${diffHours}h ${diffMinutes}m`;
+  } else {
+    return `${diffMinutes}m`;
+  }
 }

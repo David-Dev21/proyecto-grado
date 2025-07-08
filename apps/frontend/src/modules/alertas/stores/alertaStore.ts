@@ -5,13 +5,24 @@ import { AlertaWebSocket } from '../types/Alerta';
 
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
+interface UbicacionData {
+  uuid: string;
+  ubicacion: {
+    latitud: number;
+    longitud: number;
+    fecha: string;
+  };
+  timestamp: string;
+}
+
 interface AlertaStore {
   // State
   socket: Socket | null;
   isConnected: boolean;
   alertaActiva: AlertaWebSocket | null;
   alertasPendientes: AlertaWebSocket[];
-  
+  ubicacionActualizada: UbicacionData | null;
+
   establecerConexion: (connected: boolean) => void;
   establecerAlertaActiva: (alerta: AlertaWebSocket | null) => void;
   agregarAlertaPendiente: (alerta: AlertaWebSocket) => void;
@@ -21,6 +32,9 @@ interface AlertaStore {
   descartarAlerta: () => void;
   limpiarRecursos: () => void;
   limpiarAlertasAntiguas: (diasAntiguedad?: number) => void;
+  suscribirseAlerta: (uuid: string) => void;
+  desuscribirseAlerta: (uuid: string) => void;
+  clearUbicacionActualizada: () => void;
 }
 
 export const useAlertaStore = create<AlertaStore>()(
@@ -31,6 +45,7 @@ export const useAlertaStore = create<AlertaStore>()(
       isConnected: false,
       alertaActiva: null,
       alertasPendientes: [],
+      ubicacionActualizada: null,
       // Acciones
       establecerSocket: (socket: Socket | null) => set({ socket }),
       establecerConexion: (isConnected: boolean) => set({ isConnected }),
@@ -66,11 +81,23 @@ export const useAlertaStore = create<AlertaStore>()(
           console.log('Desconectado del servidor WebSocket');
           set({ isConnected: false });
         });
+
         newSocket.on('nuevaAlerta', (data: AlertaWebSocket) => {
           const { establecerAlertaActiva, agregarAlertaPendiente } = get();
 
           establecerAlertaActiva(data);
           agregarAlertaPendiente(data);
+        });
+
+        // Manejar actualizaciones de ubicación de alertas
+        newSocket.on('alertaUbicacionActualizada', (data: UbicacionData) => {
+          console.log('Ubicación de alerta actualizada:', data);
+          set({ ubicacionActualizada: data });
+        });
+
+        // Manejar confirmaciones de suscripción
+        newSocket.on('suscripcionConfirmada', (data: { uuid: string }) => {
+          console.log('Suscripción confirmada para alerta:', data.uuid);
         });
 
         return newSocket;
@@ -130,6 +157,27 @@ export const useAlertaStore = create<AlertaStore>()(
             alertasPendientes: alertasActuales,
           };
         }),
+
+      // Funciones para manejar suscripciones a alertas específicas
+      suscribirseAlerta: (uuid: string) => {
+        const socket = get().socket;
+        if (socket && socket.connected) {
+          console.log(`Suscribiéndose a alerta: ${uuid}`);
+          socket.emit('suscribirseAlerta', { uuid });
+        }
+      },
+
+      desuscribirseAlerta: (uuid: string) => {
+        const socket = get().socket;
+        if (socket && socket.connected) {
+          console.log(`Desuscribiéndose de alerta: ${uuid}`);
+          socket.emit('desuscribirseAlerta', { uuid });
+        }
+      },
+
+      clearUbicacionActualizada: () => {
+        set({ ubicacionActualizada: null });
+      },
     }),
     {
       name: 'alert-storage',

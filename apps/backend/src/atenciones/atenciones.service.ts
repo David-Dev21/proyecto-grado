@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateAtencionDto } from './dto/create-atencion.dto';
 import { UpdateAtencionDto } from './dto/update-atencion.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { EstadoAlerta } from '@prisma/client';
 
 @Injectable()
 export class AtencionesService {
@@ -40,6 +41,12 @@ export class AtencionesService {
             encargado: funcionario.encargado,
           })),
         });
+
+        // Cambiar el estado de la alerta a EN_CAMINO
+        await prisma.alerta.update({
+          where: { id: BigInt(createAtencionDto.id_alerta) },
+          data: { estado: EstadoAlerta.EN_CAMINO },
+        });
       });
 
       return {
@@ -76,6 +83,13 @@ export class AtencionesService {
         alerta: {
           select: {
             nro_caso: true,
+            persona: {
+              select: {
+                nombres: true,
+                ap_paterno: true,
+                ap_materno: true,
+              },
+            },
           },
         },
         atencion_funcionario: {

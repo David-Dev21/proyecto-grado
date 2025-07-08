@@ -1,0 +1,50 @@
+{
+  "user": {
+    "name": "Juan Pérez",
+    "email": "juan.perez@ejemplo.com",
+    "avatar": ""
+  },
+  "team": {
+    "name": "FELCV - LA PAZ",
+    "plan": "Unidad"
+  },
+  "modules": [
+    {
+      "nombre": "Dashboard",
+      "url": "/dashboard",
+      "icono": "BarChart3"
+    },
+    {
+      "nombre": "Mapa Alertas",
+      "url": "/mapa-alertas",
+      "icono": "MapPin"
+    },
+    {
+      "nombre": "Alertas",
+      "url": "/alertas",
+      "icono": "AlertTriangle"
+    },
+    {
+      "nombre": "Atenciones",
+      "url": "/atenciones",
+      "icono": "Shield"
+    },
+    {
+      "nombre": "Eventos",
+      "url": "/eventos",
+      "icono": "Calendar"
+    },
+    {
+      "nombre": "Cierre Alerta",
+      "url": "/cierre-alertas",
+      "icono": "CheckCircle"
+    }
+  ],
+  "sections": [
+    {
+      "nombre": "Configuración",
+      "url": "/configuracion",
+      "icono": "Settings2"
+    }
+  ]
+}

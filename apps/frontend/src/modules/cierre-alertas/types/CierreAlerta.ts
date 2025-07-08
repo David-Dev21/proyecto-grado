@@ -31,7 +31,7 @@ export function formatDateTime(dateTime: string): string {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -45,7 +45,7 @@ export function getTipoAlertaLabel(tipo: TipoAlertaType): string {
     ROBO: 'Robo',
     VIOLENCIA: 'Violencia',
     ACCIDENTE: 'Accidente',
-    OTRO: 'Otro'
+    OTRO: 'Otro',
   };
   return labels[tipo] || tipo;
 }
@@ -66,5 +66,20 @@ export function getTipoAlertaVariant(tipo: TipoAlertaType): 'default' | 'seconda
       return 'secondary';
     default:
       return 'secondary';
+  }
+}
+
+// Función auxiliar para calcular tiempo transcurrido desde el cierre
+export function getTimeElapsed(fechaHora: string): string {
+  const now = new Date();
+  const cierreDate = new Date(fechaHora);
+  const diffMs = now.getTime() - cierreDate.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 0) {
+    return `${diffHours}h ${diffMinutes}m`;
+  } else {
+    return `${diffMinutes}m`;
   }
 }

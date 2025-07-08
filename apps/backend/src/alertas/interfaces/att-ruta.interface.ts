@@ -1,5 +1,5 @@
 export interface ServicioSistemaExterno {
-  obtenerRuta(uuidAlerta: string): Promise<DatosRuta | null>;
+  obtenerRuta(uuidAlerta: string): Promise<DatosRuta[] | null>;
 }
 
 export interface DatosRuta {

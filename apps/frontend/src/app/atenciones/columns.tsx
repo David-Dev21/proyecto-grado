@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal, User, Truck, Radio, CheckCircle } from 'lucide-react';
-import { AtencionBackend, formatDateTime } from '@/modules/atenciones/types/Atencion';
+import { ArrowUpDown, MoreHorizontal, User, Truck, Radio, CheckCircle, Clock } from 'lucide-react';
+import { AtencionBackend, formatDateTime, getTimeElapsed } from '@/modules/atenciones/types/Atencion';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { FuncionarioDisplay } from '@/components/funcionario/FuncionarioDisplay';
 
 export const columns: ColumnDef<AtencionBackend>[] = [
   {
@@ -35,10 +36,10 @@ export const columns: ColumnDef<AtencionBackend>[] = [
   },
   {
     accessorKey: 'alerta',
-    header: 'Número de Caso',
+    header: 'Caso/Persona',
     cell: ({ row }) => {
       const alerta = row.original.alerta;
-      if (!alerta || !alerta.nro_caso) {
+      if (!alerta) {
         return (
           <div className="flex items-center space-x-2">
             <User className="h-4 w-4 text-muted-foreground" />
@@ -52,7 +53,10 @@ export const columns: ColumnDef<AtencionBackend>[] = [
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-muted-foreground" />
           <div>
-            <div className="font-medium">Caso: {alerta.nro_caso}</div>
+            <div className="font-medium">Caso: {alerta.nro_caso || 'Sin número'}</div>
+            <div className="text-sm text-muted-foreground">
+              {alerta.persona ? `${alerta.persona.nombres} ${alerta.persona.ap_paterno}`.trim() : 'Sin información de persona'}
+            </div>
           </div>
         </div>
       );
@@ -89,23 +93,16 @@ export const columns: ColumnDef<AtencionBackend>[] = [
   },
   {
     accessorKey: 'funcionarios',
-    header: 'Funcionarios',
+    header: 'Funcionario Encargado',
     cell: ({ row }) => {
       const funcionarios = row.original.atencion_funcionario || [];
       const encargado = funcionarios.find((f) => f.encargado);
-      const totalFuncionarios = funcionarios.length;
 
-      return (
-        <div className="space-y-1">
-          <div className="text-sm font-medium">Total: {totalFuncionarios}</div>
-          {encargado && (
-            <div className="flex items-center space-x-1">
-              <CheckCircle className="h-3 w-3 text-green-600" />
-              <span className="text-xs text-muted-foreground">Encargado asignado</span>
-            </div>
-          )}
-        </div>
-      );
+      if (!encargado || !encargado.id_funcionario) {
+        return <span className="text-muted-foreground">Sin encargado</span>;
+      }
+
+      return <FuncionarioDisplay funcionarioId={encargado.id_funcionario} />;
     },
   },
   {
@@ -113,14 +110,23 @@ export const columns: ColumnDef<AtencionBackend>[] = [
     header: ({ column }) => {
       return (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-          Fecha Creación
+          Fecha/Hora
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
     cell: ({ row }) => {
       const fecha = row.getValue('created_at') as string;
-      return <div className="text-sm">{formatDateTime(fecha)}</div>;
+      const timeElapsed = getTimeElapsed(fecha);
+      return (
+        <div className="flex items-center space-x-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <div className="text-sm">{formatDateTime(fecha)}</div>
+            <div className="text-xs text-muted-foreground">hace {timeElapsed}</div>
+          </div>
+        </div>
+      );
     },
   },
   {
@@ -138,10 +144,10 @@ export const columns: ColumnDef<AtencionBackend>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel> Acciones</DropdownMenuLabel>
-            {atencion.uuid && (
+            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+            {atencion.alerta && atencion.alerta.uuid && (
               <DropdownMenuItem asChild>
-                <Link href={`/alertas/${atencion.uuid}`}>Ver alerta relacionada</Link>
+                <Link href={`/alertas/${atencion.alerta.uuid}`}>Ver alerta relacionada</Link>
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

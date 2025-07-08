@@ -5,26 +5,26 @@ import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, Sideba
 import Link from 'next/link';
 
 export function NavSections({
-  sections,
-  title = 'Secciones',
+  secciones,
+  titulo = 'Sección',
 }: {
-  sections: {
-    name: string;
+  secciones: {
+    nombre: string;
     url: string;
-    icon: LucideIcon;
+    icono: LucideIcon;
   }[];
-  title?: string;
+  titulo?: string;
 }) {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarGroupLabel>{titulo}</SidebarGroupLabel>
       <SidebarMenu>
-        {sections.map((item) => (
-          <SidebarMenuItem key={item.name}>
+        {secciones.map((elemento) => (
+          <SidebarMenuItem key={elemento.nombre}>
             <SidebarMenuButton asChild>
-              <Link href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
+              <Link href={elemento.url}>
+                <elemento.icono />
+                <span>{elemento.nombre}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

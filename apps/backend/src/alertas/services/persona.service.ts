@@ -2,15 +2,15 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PersonaRepository } from '../interfaces/persona-repository.interface';
 import { ContactoRepository } from '../interfaces/contacto-repository.interface';
 import { CreateAlertaDto } from '../dto/create-alerta.dto';
-import { PERSONA_REPOSITORY, CONTACTO_REPOSITORY } from '../constants/injection-tokens';
+import { PersonaRepositoryToken, ContactoRepositoryToken } from '../constants/injection-tokens';
 
 @Injectable()
 export class PersonaService {
   private readonly logger = new Logger(PersonaService.name);
 
   constructor(
-    @Inject(PERSONA_REPOSITORY) private personaRepository: PersonaRepository,
-    @Inject(CONTACTO_REPOSITORY) private contactoRepository: ContactoRepository,
+    @Inject(PersonaRepositoryToken) private personaRepository: PersonaRepository,
+    @Inject(ContactoRepositoryToken) private contactoRepository: ContactoRepository,
   ) {}
 
   async createOrUpdatePersona(createAlertaDto: CreateAlertaDto) {

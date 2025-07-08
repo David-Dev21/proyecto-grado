@@ -69,6 +69,14 @@ export class EventosService {
               nro_caso: true,
               estado: true,
               fecha_hora: true,
+              persona: {
+                select: {
+                  nombres: true,
+                  ap_paterno: true,
+                  ap_materno: true,
+                  ci: true,
+                },
+              },
             },
           },
         },
@@ -107,6 +115,14 @@ export class EventosService {
               nro_caso: true,
               estado: true,
               fecha_hora: true,
+              persona: {
+                select: {
+                  nombres: true,
+                  ap_paterno: true,
+                  ap_materno: true,
+                  ci: true,
+                },
+              },
             },
           },
         },
@@ -210,6 +226,92 @@ export class EventosService {
       }
       this.logger.error('Error al eliminar evento', error.stack);
       throw new BadRequestException('Error al eliminar el evento');
+    }
+  }
+
+  async enviarAATT(id: number) {
+    try {
+      // Obtener el evento con la información necesaria
+      const evento = await this.prisma.evento.findFirst({
+        where: {
+          id: BigInt(id),
+          deleted_at: null,
+        },
+        include: {
+          alerta: {
+            select: {
+              uuid: true,
+            },
+          },
+        },
+      });
+
+      if (!evento) {
+        throw new NotFoundException('Evento no encontrado');
+      }
+
+      if (!evento.alerta?.uuid) {
+        throw new BadRequestException('El evento no tiene una alerta válida con UUID');
+      }
+
+      // Buscar información del funcionario
+      const funcionario = await this.prisma.funcionarios.findFirst({
+        where: {
+          id: evento.id_funcionario,
+          deleted_at: null,
+        },
+      });
+
+      if (!funcionario) {
+        throw new BadRequestException('No se encontró información del funcionario');
+      }
+
+      // Preparar datos para enviar a ATT
+      const datosATT = {
+        nombre: `${funcionario.nombres} ${funcionario.ap_paterno}`.trim(),
+        grado: funcionario.grado.trim(),
+        comentario: evento.comentario.trim(),
+        fecha: evento.fecha_hora.toISOString(),
+      };
+
+      // Obtener configuración de ATT
+      const attBaseUrl = process.env.ATT_BASE_URL || 'https://test.att.gob.bo/acompaname/index.php';
+      const attToken = process.env.ATT_AUTH_TOKEN || '';
+      const fullUrl = `${attBaseUrl}/api/caso/${evento.alerta.uuid}/eventos`;
+
+      // Asegurar que el token tenga el formato JWT correcto
+      const authHeader = attToken.startsWith('JWT ') ? attToken : `JWT ${attToken}`;
+
+      this.logger.log('Enviando evento a ATT:', {
+        url: fullUrl,
+        datos: datosATT,
+        alertaUUID: evento.alerta.uuid,
+      });
+
+      // Hacer petición a ATT
+      const response = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: authHeader,
+        },
+        body: JSON.stringify(datosATT),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+      }
+
+      return {
+        message: 'Evento enviado a ATT exitosamente',
+        success: true,
+      };
+    } catch (error) {
+      this.logger.error('Error al enviar evento a ATT:', error);
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Error al enviar evento a ATT: ${error.message}`);
     }
   }
 }

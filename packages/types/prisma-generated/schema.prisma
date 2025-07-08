@@ -175,6 +175,7 @@ model UbicacionAlerta {
 
   alerta Alerta @relation(fields: [id_alerta], references: [id])
 
+  @@unique([id_alerta, fecha_hora, latitud, longitud], name: "unique_ubicacion_alerta")
   @@map("ubicacion_alertas")
 }
 

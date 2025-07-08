@@ -33,6 +33,14 @@ export class UbicacionAlertasService {
       if (error.code === 'P2003') {
         throw new BadRequestException('La alerta especificada no existe');
       }
+      if (error.code === 'P2002' && error.meta?.target?.includes('unique_ubicacion_alerta')) {
+        // Error de duplicado - devolver mensaje informativo en lugar de error
+        this.logger.debug('Ubicación duplicada ignorada:', createUbicacionAlertaDto);
+        return {
+          message: 'Ubicación duplicada - no se creó',
+          data: null,
+        };
+      }
       throw new BadRequestException(`Error al crear la ubicación: ${error.message}`);
     }
   }
@@ -135,6 +143,48 @@ export class UbicacionAlertasService {
     } catch (error) {
       this.logger.error(`Error al obtener ubicaciones de alerta ${id_alerta}:`, error);
       throw new BadRequestException('Error al obtener las ubicaciones de la alerta');
+    }
+  }
+
+  async findAllForAlerta(idAlerta: number) {
+    try {
+      const ubicaciones = await this.prisma.ubicacionAlerta.findMany({
+        where: {
+          id_alerta: BigInt(idAlerta),
+          deleted_at: null,
+        },
+        orderBy: {
+          fecha_hora: 'desc',
+        },
+      });
+
+      return ubicaciones.map((ubicacion) => ({
+        ...ubicacion,
+        id: ubicacion.id.toString(),
+        id_alerta: ubicacion.id_alerta.toString(),
+      }));
+    } catch (error) {
+      this.logger.error(`Error al obtener ubicaciones para la alerta ${idAlerta}:`, error);
+      throw new BadRequestException(`Error al obtener las ubicaciones para la alerta ${idAlerta}`);
+    }
+  }
+
+  async existeUbicacion(idAlerta: number, fechaHora: Date, latitud: number, longitud: number): Promise<boolean> {
+    try {
+      const ubicacionExistente = await this.prisma.ubicacionAlerta.findFirst({
+        where: {
+          id_alerta: BigInt(idAlerta),
+          fecha_hora: fechaHora,
+          latitud: latitud,
+          longitud: longitud,
+          deleted_at: null,
+        },
+      });
+
+      return !!ubicacionExistente;
+    } catch (error) {
+      this.logger.error('Error al verificar ubicación existente:', error);
+      return false; // En caso de error, permitir el intento de creación
     }
   }
 

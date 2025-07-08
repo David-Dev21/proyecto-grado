@@ -169,6 +169,9 @@ CREATE UNIQUE INDEX "alertas_uuid_origen_key" ON "alertas"("uuid", "origen");
 CREATE UNIQUE INDEX "atenciones_id_alerta_key" ON "atenciones"("id_alerta");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "ubicacion_alertas_id_alerta_fecha_hora_latitud_longitud_key" ON "ubicacion_alertas"("id_alerta", "fecha_hora", "latitud", "longitud");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "cierres_alerta_id_alerta_key" ON "cierres_alerta"("id_alerta");
 
 -- AddForeignKey

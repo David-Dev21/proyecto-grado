@@ -7,6 +7,7 @@ import {
   formatDateTime,
   getTipoAlertaLabel,
   getTipoAlertaVariant,
+  getTimeElapsed,
 } from '@/modules/cierre-alertas/types/CierreAlerta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,16 +21,29 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { ATTCierreService } from '@/services/attCierreService';
+import { FuncionarioDisplay } from '@/components/funcionario/FuncionarioDisplay';
+import { toast } from 'sonner';
 
 // Función para enviar cierre a ATT
 const enviarCierreAATT = async (cierre: CierreAlertaBackend) => {
   try {
-    await ATTCierreService.enviarCierre(cierre);
-    alert('Cierre enviado a ATT exitosamente');
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const response = await fetch(`${backendUrl}/cierre-alertas/${cierre.id}/enviar-att`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    toast.success(result.message || 'Cierre enviado a ATT exitosamente');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    alert(`Error al enviar cierre a ATT: ${errorMessage}`);
+    toast.error(`Error al enviar cierre a ATT: ${errorMessage}`);
   }
 };
 
@@ -72,12 +86,10 @@ export const columns: ColumnDef<CierreAlertaBackend>[] = [
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-muted-foreground" />
           <div>
-            <div className="font-medium">Caso: {alerta.nro_caso}</div>
-            {alerta.persona && (
-              <div className="text-sm text-muted-foreground">
-                {alerta.persona.nombres} {alerta.persona.ap_paterno}
-              </div>
-            )}
+            <div className="font-medium">Caso: {alerta.nro_caso || 'Sin número'}</div>
+            <div className="text-sm text-muted-foreground">
+              {alerta.persona ? `${alerta.persona.nombres} ${alerta.persona.ap_paterno}`.trim() : 'Sin información de persona'}
+            </div>
           </div>
         </div>
       );
@@ -98,13 +110,8 @@ export const columns: ColumnDef<CierreAlertaBackend>[] = [
     accessorKey: 'id_funcionario',
     header: 'Funcionario',
     cell: ({ row }) => {
-      const funcionario = row.getValue('id_funcionario') as string;
-      return (
-        <div className="flex items-center space-x-2">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <div className="font-medium">{funcionario}</div>
-        </div>
-      );
+      const funcionarioId = row.getValue('id_funcionario') as string;
+      return <FuncionarioDisplay funcionarioId={funcionarioId} />;
     },
   },
   {
@@ -152,10 +159,14 @@ export const columns: ColumnDef<CierreAlertaBackend>[] = [
     },
     cell: ({ row }) => {
       const fecha = row.getValue('fecha_hora') as string;
+      const timeElapsed = getTimeElapsed(fecha);
       return (
         <div className="flex items-center space-x-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <div className="text-sm">{formatDateTime(fecha)}</div>
+          <div>
+            <div className="text-sm">{formatDateTime(fecha)}</div>
+            <div className="text-xs text-muted-foreground">hace {timeElapsed}</div>
+          </div>
         </div>
       );
     },

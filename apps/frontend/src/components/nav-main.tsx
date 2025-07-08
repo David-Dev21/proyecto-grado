@@ -14,7 +14,6 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home } from 'lucide-react';
 
 export function NavMain({
   items,
