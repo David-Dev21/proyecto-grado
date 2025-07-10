@@ -1,23 +1,26 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { CreateUbicacionAlertaDto } from './dto/create-ubicacion_alerta.dto';
 import { UpdateUbicacionAlertaDto } from './dto/update-ubicacion_alerta.dto';
+import { UbicacionAlertasRepository } from './repositories/ubicacion-alertas.repository';
+import { Point } from 'geojson';
 
 @Injectable()
 export class UbicacionAlertasService {
   private readonly logger = new Logger(UbicacionAlertasService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly ubicacionAlertasRepository: UbicacionAlertasRepository) {}
 
   async create(createUbicacionAlertaDto: CreateUbicacionAlertaDto) {
     try {
-      const ubicacion = await this.prisma.ubicacionAlerta.create({
-        data: {
-          id_alerta: BigInt(createUbicacionAlertaDto.id_alerta),
-          fecha_hora: new Date(createUbicacionAlertaDto.fecha_hora),
-          latitud: createUbicacionAlertaDto.latitud,
-          longitud: createUbicacionAlertaDto.longitud,
-        },
+      const point: Point = {
+        type: 'Point',
+        coordinates: [createUbicacionAlertaDto.longitud, createUbicacionAlertaDto.latitud],
+      };
+
+      const ubicacion = await this.ubicacionAlertasRepository.create({
+        idAlerta: createUbicacionAlertaDto.id_alerta,
+        fechaHora: new Date(createUbicacionAlertaDto.fecha_hora),
+        ubicacion: point,
       });
 
       return {
@@ -47,35 +50,12 @@ export class UbicacionAlertasService {
 
   async findAll() {
     try {
-      const ubicaciones = await this.prisma.ubicacionAlerta.findMany({
-        where: {
-          deleted_at: null,
-        },
-        include: {
-          alerta: {
-            select: {
-              id: true,
-              uuid: true,
-              nro_caso: true,
-              estado: true,
-            },
-          },
-        },
-        orderBy: {
-          created_at: 'desc',
-        },
-      });
+      const ubicaciones = await this.ubicacionAlertasRepository.findAll();
 
       return ubicaciones.map((ubicacion) => ({
         ...ubicacion,
-        id: ubicacion.id.toString(),
-        id_alerta: ubicacion.id_alerta.toString(),
-        alerta: ubicacion.alerta
-          ? {
-              ...ubicacion.alerta,
-              id: ubicacion.alerta.id.toString(),
-            }
-          : null,
+        id: ubicacion.id,
+        idAlerta: ubicacion.idAlerta.toString(),
       }));
     } catch (error) {
       this.logger.error('Error al obtener ubicaciones de alertas:', error);
@@ -83,39 +63,17 @@ export class UbicacionAlertasService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     try {
-      const ubicacion = await this.prisma.ubicacionAlerta.findFirst({
-        where: {
-          id: BigInt(id),
-          deleted_at: null,
-        },
-        include: {
-          alerta: {
-            select: {
-              id: true,
-              uuid: true,
-              nro_caso: true,
-              estado: true,
-            },
-          },
-        },
-      });
-
+      const ubicacion = await this.ubicacionAlertasRepository.findOne(id);
       if (!ubicacion) {
         throw new NotFoundException(`Ubicación con ID ${id} no encontrada`);
       }
 
       return {
         ...ubicacion,
-        id: ubicacion.id.toString(),
-        id_alerta: ubicacion.id_alerta.toString(),
-        alerta: ubicacion.alerta
-          ? {
-              ...ubicacion.alerta,
-              id: ubicacion.alerta.id.toString(),
-            }
-          : null,
+        id: ubicacion.id,
+        idAlerta: ubicacion.idAlerta.toString(),
       };
     } catch (error) {
       this.logger.error(`Error al obtener ubicación ${id}:`, error);
@@ -123,22 +81,13 @@ export class UbicacionAlertasService {
     }
   }
 
-  async findByAlerta(id_alerta: number) {
+  async findByAlerta(idAlerta: number) {
     try {
-      const ubicaciones = await this.prisma.ubicacionAlerta.findMany({
-        where: {
-          id_alerta: BigInt(id_alerta),
-          deleted_at: null,
-        },
-        orderBy: {
-          fecha_hora: 'desc',
-        },
-      });
-
+      const ubicaciones = await this.ubicacionAlertasRepository.findByAlertaId(idAlerta);
       return ubicaciones.map((ubicacion) => ({
         ...ubicacion,
-        id: ubicacion.id.toString(),
-        id_alerta: ubicacion.id_alerta.toString(),
+        id: ubicacion.id,
+        idAlerta: ubicacion.idAlerta.toString(),
       }));
     } catch (error) {
       this.logger.error(`Error al obtener ubicaciones de alerta ${id_alerta}:`, error);
@@ -188,23 +137,24 @@ export class UbicacionAlertasService {
     }
   }
 
-  async update(id: number, updateUbicacionAlertaDto: UpdateUbicacionAlertaDto) {
+  async update(id: string, updateUbicacionAlertaDto: UpdateUbicacionAlertaDto) {
     try {
-      const ubicacion = await this.prisma.ubicacionAlerta.update({
-        where: { id: BigInt(id) },
-        data: {
-          latitud: updateUbicacionAlertaDto.latitud,
-          longitud: updateUbicacionAlertaDto.longitud,
-          fecha_hora: updateUbicacionAlertaDto.fecha_hora ? new Date(updateUbicacionAlertaDto.fecha_hora) : undefined,
-        },
+      const point: Point = {
+        type: 'Point',
+        coordinates: [updateUbicacionAlertaDto.longitud, updateUbicacionAlertaDto.latitud],
+      };
+
+      const ubicacion = await this.ubicacionAlertasRepository.update(id, {
+        ubicacion: point,
+        fechaHora: updateUbicacionAlertaDto.fecha_hora ? new Date(updateUbicacionAlertaDto.fecha_hora) : undefined,
       });
 
       return {
         message: 'Ubicación actualizada exitosamente',
         data: {
           ...ubicacion,
-          id: ubicacion.id.toString(),
-          id_alerta: ubicacion.id_alerta.toString(),
+          id: ubicacion.id,
+          idAlerta: ubicacion.idAlerta.toString(),
         },
       };
     } catch (error) {
@@ -216,13 +166,9 @@ export class UbicacionAlertasService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     try {
-      await this.prisma.ubicacionAlerta.update({
-        where: { id: BigInt(id) },
-        data: { deleted_at: new Date() },
-      });
-
+      await this.ubicacionAlertasRepository.delete(id);
       return {
         message: 'Ubicación eliminada exitosamente',
       };

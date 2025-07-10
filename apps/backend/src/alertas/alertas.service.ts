@@ -1,51 +1,40 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { CreateAlertaDto } from './dto/create-alerta.dto';
 import { UpdateAlertaDto } from './dto/update-alerta.dto';
 import { EstadoAlerta, OrigenAlerta } from '@prisma/client';
 import { PersonaService } from './services/persona.service';
 import { CudService } from './services/cud.service';
 import { AlertaRepository } from './interfaces/alerta-repository.interface';
-import { AlertaRepositoryToken } from './constants/injection-tokens';
+import { AlertaRepositoryToken } from '../constants/injection-tokens';
 
 @Injectable()
 export class AlertasService {
-  private readonly logger = new Logger(AlertasService.name);
-
   constructor(
-    @Inject(AlertaRepositoryToken) private alertaRepository: AlertaRepository,
-    private personaService: PersonaService,
-    private cud: CudService,
+    @Inject(AlertaRepositoryToken) private readonly alertaRepository: AlertaRepository,
+    private readonly personaService: PersonaService,
+    private readonly cud: CudService,
   ) {}
 
-  async create(createAlertaDto: CreateAlertaDto) {
-    try {
-      // Delegar la gestión de persona y contactos al PersonaService
-      const persona = await this.personaService.createOrUpdatePersona(createAlertaDto);
-      // Crear la alerta
-      const alerta = await this.createAlerta(createAlertaDto, persona.id);
-      // Procesar contactos adicionales
-      if (createAlertaDto.contactos) {
-        await this.personaService.processContactosAdicionales(persona.id, createAlertaDto.contactos);
-      }
-      return {
-        message: 'Alerta creada exitosamente',
-        uuid: alerta.uuid,
-      };
-    } catch (error) {
-      throw error;
+  async create(datosAlerta: CreateAlertaDto): Promise<string> {
+    const persona = await this.personaService.createOrUpdatePersona(datosAlerta);
+    const alerta = await this.crearAlerta(datosAlerta, persona.id);
+    if (datosAlerta.contactos) {
+      await this.personaService.processContactosAdicionales(persona.id, datosAlerta.contactos);
     }
+    return alerta.uuid;
   }
 
-  private async createAlerta(createAlertaDto: CreateAlertaDto, personaId: bigint) {
+  private async crearAlerta(datosAlerta: CreateAlertaDto, personaId: bigint) {
     return this.alertaRepository.create({
-      uuid: createAlertaDto.IdAlerta,
+      uuid: datosAlerta.IdAlerta,
       id_persona: personaId,
-      fecha_hora: new Date(createAlertaDto.fechaRegistro),
+      fecha_hora: new Date(datosAlerta.fechaRegistro),
       nro_caso: this.cud.generate(),
       estado: EstadoAlerta.EN_PELIGRO,
-      origen: OrigenAlerta.ATT, // Siempre ATT por defecto
+      origen: OrigenAlerta.ATT,
     });
   }
+
   async findAll() {
     return this.alertaRepository.findAll();
   }
@@ -59,54 +48,32 @@ export class AlertasService {
 
     return alerta;
   }
-  async update(uuid: string, updateAlertaDto: UpdateAlertaDto) {
-    try {
-      // Verificar que la alerta existe y no está eliminada
-      const alertaExistente = await this.alertaRepository.findByUuidNotDeleted(uuid);
+  async update(uuid: string, datosActualizacion: UpdateAlertaDto) {
+    await this.verificarAlertaExiste(uuid);
+    const datosParaActualizar = {
+      fecha_hora: datosActualizacion.fechaRegistro ? new Date(datosActualizacion.fechaRegistro) : undefined,
+      estado: datosActualizacion.estado || undefined,
+      updated_at: new Date(),
+    };
 
-      if (!alertaExistente) {
-        throw new Error('Alerta no encontrada o eliminada');
-      }
-
-      // TODO: Refactorizar PersonaService para manejar updates
-      // Por ahora solo actualizamos la alerta
-
-      // Actualizar la alerta usando el repository
-      const alertaResult = await this.alertaRepository.update(uuid, {
-        fecha_hora: updateAlertaDto.fechaRegistro ? new Date(updateAlertaDto.fechaRegistro) : undefined,
-        estado: updateAlertaDto.estado || undefined,
-        updated_at: new Date(),
-      });
-
-      return alertaResult;
-    } catch (error) {
-      this.logger.error('Error al actualizar alerta:', error);
-      throw error;
-    }
+    return this.alertaRepository.update(uuid, datosParaActualizar);
   }
 
   async remove(uuid: string) {
-    try {
-      // Verificar que la alerta existe y no está eliminada
-      const alertaExistente = await this.alertaRepository.findByUuidNotDeleted(uuid);
+    await this.verificarAlertaExiste(uuid);
+    await this.alertaRepository.softDelete(uuid);
+    return {
+      message: 'Alerta eliminada exitosamente',
+      alertaUuid: uuid,
+      fechaEliminacion: new Date(),
+    };
+  }
 
-      if (!alertaExistente) {
-        throw new Error('Alerta no encontrada o ya eliminada');
-      }
+  private async verificarAlertaExiste(uuid: string): Promise<void> {
+    const alertaExistente = await this.alertaRepository.findByUuidNotDeleted(uuid);
 
-      // Soft delete de la alerta usando el repository
-      await this.alertaRepository.softDelete(uuid);
-
-      // TODO: También manejar soft delete de contactos relacionados a través de PersonaService
-
-      return {
-        message: 'Alerta eliminada exitosamente',
-        alertaUuid: uuid,
-        fechaEliminacion: new Date(),
-      };
-    } catch (error) {
-      this.logger.error('Error al eliminar alerta:', error);
-      throw error;
+    if (!alertaExistente) {
+      throw new Error('Alerta no encontrada o eliminada');
     }
   }
 }

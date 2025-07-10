@@ -1,13 +1,6 @@
-import {
-  WebSocketGateway,
-  SubscribeMessage,
-  WsResponse,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-} from '@nestjs/websockets';
+import { WebSocketGateway, SubscribeMessage, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ServicioProcesadorUbicacion } from '../alertas/services/ubicacion.service';
+import { ProcesadorUbicacionService } from '../alertas/services/procesador-ubicacion.service';
 import { ServicioNotificacionAlerta } from '../alertas/interfaces/notificacion.interface';
 import { Logger } from '@nestjs/common';
 
@@ -33,7 +26,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, 
   // Intervalos activos para cada alerta
   private readonly intervalosAlerta = new Map<string, NodeJS.Timeout>(); // alertaUuid -> interval
 
-  constructor(private readonly procesadorUbicacion: ServicioProcesadorUbicacion) {
+  constructor(private readonly procesadorUbicacion: ProcesadorUbicacionService) {
     // Configurar los callbacks para recibir notificaciones
     this.procesadorUbicacion.configurarNotificacionCallback((uuid, ubicacion) => {
       this.emitirUbicacionActualizada(uuid, ubicacion);

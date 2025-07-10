@@ -1,9 +1,9 @@
 import { useAuthStore } from '@/stores/authStore';
 
-/**
- * Hook conveniente para acceder a los datos de autenticación
- * Proporciona acceso fácil al estado y acciones del store de auth
- */
+/*
+Hook conveniente para acceder a los datos de autenticación
+Proporciona acceso fácil al estado y acciones del store de auth
+*/
 export function useAuth() {
   const store = useAuthStore();
 

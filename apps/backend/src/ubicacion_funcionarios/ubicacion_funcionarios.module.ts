@@ -1,12 +1,21 @@
 import { Module } from '@nestjs/common';
-import { UbicacionFuncionariosService } from './ubicacion_funcionarios.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { UbicacionFuncionariosController } from './ubicacion_funcionarios.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { UbicacionFuncionariosService } from './ubicacion_funcionarios.service';
+import { UbicacionFuncionario } from './entities/ubicacion-funcionario.entity';
+import { UbicacionFuncionariosRepository } from './repositories/ubicacion-funcionarios.repository';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([UbicacionFuncionario])],
   controllers: [UbicacionFuncionariosController],
-  providers: [UbicacionFuncionariosService],
-  imports: [PrismaModule],
+  providers: [
+    UbicacionFuncionariosService,
+    UbicacionFuncionariosRepository,
+    {
+      provide: 'IUbicacionFuncionariosRepository',
+      useClass: UbicacionFuncionariosRepository,
+    },
+  ],
   exports: [UbicacionFuncionariosService],
 })
 export class UbicacionFuncionariosModule {}

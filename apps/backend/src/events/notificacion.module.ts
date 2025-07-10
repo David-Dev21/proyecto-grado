@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { WebSocketNotificacionService } from '../alertas/services/websocket-notificacion.service';
-import { ServicioNotificacionToken } from '../alertas/constants/injection-tokens';
+import { ServicioNotificacionToken } from '../constants/injection-tokens';
 
 @Module({
   providers: [

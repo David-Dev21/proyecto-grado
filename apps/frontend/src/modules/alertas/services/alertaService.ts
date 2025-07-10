@@ -54,6 +54,9 @@ export const alertasService = {
   create: (data: any) =>
     fetchApi<AlertaBackend>('/alertas', {
       method: 'POST',
+      headers: {
+        api_key_gateway: 'mi_clave_secreta_123',
+      },
       body: JSON.stringify(data),
     }),
 

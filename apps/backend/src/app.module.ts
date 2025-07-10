@@ -1,5 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { databaseConfig } from './config/database.config';
 import { AlertasModule } from './alertas/alertas.module';
 import { AtencionesModule } from './atenciones/atenciones.module';
 import { EventosModule } from './eventos/eventos.module';
@@ -13,6 +15,7 @@ import { GatewayAuthMiddleware } from './middlewares/gateway-auth.middleware';
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot(databaseConfig),
     ScheduleModule.forRoot(),
     AlertasModule,
     AtencionesModule,
@@ -23,6 +26,7 @@ import { GatewayAuthMiddleware } from './middlewares/gateway-auth.middleware';
     FuncionariosModule,
     EventsModule,
   ],
+
   controllers: [],
   providers: [],
 })

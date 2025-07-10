@@ -1,42 +1,67 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Alerta } from '../../alertas/entities/alerta.entity';
 
-export class AtencionFuncionarioEntity {
-  @ApiProperty()
-  id: bigint;
+@Entity({ name: 'atenciones' })
+export class Atencion {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @ApiProperty()
-  id_atencion: bigint;
+  @Column({ type: 'bigint' })
+  id_alerta: number;
 
-  @ApiProperty({ required: false })
-  id_funcionario?: string;
+  @Column()
+  usuario_despachador: string;
 
-  @ApiProperty()
-  encargado: boolean;
+  @Column({ type: 'timestamp' })
+  fecha_hora: Date;
 
-  @ApiProperty()
+  @Column('text', { nullable: true })
+  comentario?: string;
+
+  @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty()
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ApiProperty({ required: false })
+  @DeleteDateColumn()
   deleted_at?: Date;
+
+  @ManyToOne(() => Alerta)
+  @JoinColumn({ name: 'id_alerta' })
+  alerta: Alerta;
+
+  @OneToMany(() => AtencionFuncionario, af => af.atencion)
+  funcionarios: AtencionFuncionario[];
 }
 
-export class AlertaCasoEntity {
-  @ApiProperty({ description: 'Número de caso de la alerta' })
-  nro_caso: string;
-}
+@Entity({ name: 'atencion_funcionario' })
+export class AtencionFuncionario {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-export class AtencionFuncionarioWithDetailsEntity {
-  @ApiProperty({ description: 'ID del funcionario en atención' })
-  id: string;
+  @Column()
+  id_atencion: number;
 
-  @ApiProperty({ description: 'ID de la atención' })
-  id_atencion: string;
-
-  @ApiProperty({ description: 'ID del funcionario', required: false })
+  @Column({ nullable: true })
   id_funcionario?: string;
+
+  @Column()
+  encargado: boolean;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at?: Date;
+
+  @ManyToOne(() => Atencion)
+  @JoinColumn({ name: 'id_atencion' })
+  atencion: Atencion;
+}
 
   @ApiProperty({ description: 'Es encargado de la atención' })
   encargado: boolean;

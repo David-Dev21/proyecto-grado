@@ -1,36 +1,50 @@
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Alerta } from '../../alertas/entities/alerta.entity';
+import { Point } from 'geojson';
 
+@Entity({ name: 'eventos' })
 export class Evento {
-  @ApiProperty()
-  id: bigint;
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @ApiProperty()
-  id_alerta: string;
+  @Column({ type: 'bigint' })
+  id_alerta: number;
 
-  @ApiProperty()
+  @Column({ nullable: true })
   id_funcionario: string;
 
-  @ApiProperty({ required: false })
-  id_seguimiento?: string;
-
-  @ApiProperty()
+  @Column({ type: 'timestamp' })
   fecha_hora: Date;
 
-  @ApiProperty()
-  ubicacion: any; // geography(POINT)
+  @Column('geography', {
+    spatialFeatureType: 'Point',
+    srid: 4326,
+    nullable: true,
+  })
+  ubicacion?: Point;
 
-  @ApiProperty()
+  @Column('text')
   comentario: string;
 
-  @ApiProperty()
+  @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty()
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ApiProperty({ required: false })
+  @DeleteDateColumn()
   deleted_at?: Date;
 
-  @ApiProperty({ required: false })
-  alerta?: any;
+  @ManyToOne(() => Alerta)
+  @JoinColumn({ name: 'id_alerta' })
+  alerta: Alerta;
 }

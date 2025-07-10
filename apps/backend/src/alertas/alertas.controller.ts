@@ -1,23 +1,13 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  HttpStatus,
-  HttpException,
-  Logger,
-  Inject,
-} from '@nestjs/common';
-import { ApiTags, ApiResponse, ApiOperation, ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Logger } from '@nestjs/common';
+import { ApiTags, ApiResponse, ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
 import { AlertaEntity } from './entities/alerta.entity';
 import { AlertasService } from './alertas.service';
 import { CreateAlertaDto } from './dto/create-alerta.dto';
 import { UpdateAlertaDto } from './dto/update-alerta.dto';
 import { AtencionesService } from 'src/atenciones/atenciones.service';
-import { ServicioProcesadorUbicacion } from './services/ubicacion.service';
+import { CreateAlertaResponseDto } from './dto/create-alerta-response.dto';
+import { ProcesadorNotificacionesService } from './services/procesador-notificaciones.service';
+import { ManejoErroresService } from './services/manejo-errores.service';
 
 @ApiTags('alertas')
 @Controller('alertas')
@@ -27,164 +17,85 @@ export class AlertasController {
   constructor(
     private readonly alertasService: AlertasService,
     private readonly atencionesService: AtencionesService,
-    private readonly servicioProcesamientoUbicacion: ServicioProcesadorUbicacion,
+    private readonly procesadorNotificaciones: ProcesadorNotificacionesService,
+    private readonly manejoErrores: ManejoErroresService,
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear nueva alerta' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'La alerta ha sido creada exitosamente.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Datos de entrada inválidos.',
-  })
-  @ApiResponse({
-    status: HttpStatus.INTERNAL_SERVER_ERROR,
-    description: 'Error interno del servidor.',
-  })
-  async create(@Body() createAlertaDto: CreateAlertaDto) {
+  @ApiResponse({ status: 201, description: 'Alerta creada exitosamente', type: CreateAlertaResponseDto })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
+  @ApiResponse({ status: 500, description: 'Error interno del servidor.' })
+  async create(@Body() datosAlerta: CreateAlertaDto): Promise<CreateAlertaResponseDto> {
     try {
-      // Crear la alerta en la base de datos
-      const result = await this.alertasService.create(createAlertaDto);
-      const uuidAlerta = result.uuid;
-
-      if (uuidAlerta) {
-        this.logger.log(`Alerta creada con UUID ${uuidAlerta}. Notificando y procesando ubicación...`);
-        // Notificar nueva alerta al frontend
-        await this.servicioProcesamientoUbicacion.notificarNuevaAlerta(uuidAlerta);
-        // Procesar ubicación de forma asíncrona
-        this.servicioProcesamientoUbicacion.procesarUbicacionParaAlerta(uuidAlerta);
+      const uuid = await this.alertasService.create(datosAlerta);
+      if (uuid) {
+        this.logger.log(`Alerta creada con UUID ${uuid}. Procesando notificaciones...`);
+        // Procesar notificaciones de forma asíncrona usando el servicio especializado
+        this.procesadorNotificaciones.procesarNotificacionesDespuesDeCrear(uuid);
       }
-
-      return result;
+      return {
+        message: 'Alerta creada exitosamente',
+        uuid,
+      };
     } catch (error) {
-      return this.handleDatabaseError(error);
-    }
-  }
-
-  private handleDatabaseError(error: any) {
-    // Manejar diferentes tipos de errores de Prisma
-    if (error.code === 'P2002') {
-      throw new HttpException('Ya existe una alerta con este ID', HttpStatus.CONFLICT);
-    } else if (error.code === 'P2003') {
-      throw new HttpException('Error de referencia en la base de datos', HttpStatus.BAD_REQUEST);
-    } else if (error.code === 'P2025') {
-      throw new HttpException('Registro no encontrado', HttpStatus.NOT_FOUND);
-    } else {
-      throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.manejoErrores.manejarError(error, 'crear alerta');
     }
   }
 
   @Get()
   @ApiCreatedResponse({ type: AlertaEntity, isArray: true })
-  @ApiOperation({ summary: 'Obtener todas las alertas' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Lista de alertas obtenida exitosamente.',
-  })
+  @ApiResponse({ status: 200, description: 'Lista de alertas obtenida exitosamente.' })
   async findAll() {
     try {
-      const result = await this.alertasService.findAll();
-      return result;
+      return await this.alertasService.findAll();
     } catch (error) {
-      this.logger.error('Error al obtener alertas:', error);
-      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.manejoErrores.manejarError(error, 'obtener todas las alertas');
     }
   }
 
   @Get(':uuid')
   @ApiCreatedResponse({ type: AlertaEntity })
-  @ApiOperation({ summary: 'Obtener una alerta por UUID' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Alerta encontrada exitosamente.',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Alerta no encontrada.',
-  })
+  @ApiResponse({ status: 200, description: 'Alerta encontrada exitosamente.' })
+  @ApiResponse({ status: 404, description: 'Alerta no encontrada.' })
   async findOne(@Param('uuid') uuid: string) {
     try {
-      const result = await this.alertasService.findOne(uuid);
-      return result;
+      return await this.alertasService.findOne(uuid);
     } catch (error) {
-      this.logger.error('Error al obtener alerta:', error);
-      throw new HttpException('Alerta no encontrada', HttpStatus.NOT_FOUND);
+      this.manejoErrores.manejarError(error, 'obtener alerta por UUID');
     }
   }
 
   @Get(':id/atencion')
-  @ApiOperation({ summary: 'Obtener la atención asociada a una alerta' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Atención encontrada exitosamente.',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Atención no encontrada para esta alerta.',
-  })
+  @ApiResponse({ status: 200, description: 'Atención encontrada exitosamente.' })
+  @ApiResponse({ status: 404, description: 'Atención no encontrada para esta alerta.' })
   async findAtencionByAlerta(@Param('id') id: string) {
     try {
-      const result = await this.atencionesService.findByAlertaId(parseInt(id));
-      return result;
+      return await this.atencionesService.findByAlertaId(parseInt(id));
     } catch (error) {
-      this.logger.error('Error al obtener atención:', error);
-      throw new HttpException('Atención no encontrada', HttpStatus.NOT_FOUND);
+      this.manejoErrores.manejarError(error, 'obtener atención por alerta');
     }
   }
   @Patch(':uuid')
-  @ApiOperation({ summary: 'Actualizar una alerta' })
-  @ApiBody({
-    type: UpdateAlertaDto,
-    description: 'Datos para actualizar la alerta',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Alerta actualizada exitosamente.',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Alerta no encontrada.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Datos de entrada inválidos.',
-  })
-  async update(@Param('uuid') uuid: string, @Body() updateAlertaDto: UpdateAlertaDto) {
+  @ApiBody({ type: UpdateAlertaDto, description: 'Datos para actualizar la alerta' })
+  @ApiResponse({ status: 200, description: 'Alerta actualizada exitosamente.' })
+  @ApiResponse({ status: 404, description: 'Alerta no encontrada.' })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos.' })
+  async update(@Param('uuid') uuid: string, @Body() datosActualizacion: UpdateAlertaDto) {
     try {
-      const result = await this.alertasService.update(uuid, updateAlertaDto);
-      return result;
+      return await this.alertasService.update(uuid, datosActualizacion);
     } catch (error) {
-      this.logger.error('Error al actualizar alerta:', error);
-      if (error.message.includes('no encontrada')) {
-        throw new HttpException('Alerta no encontrada', HttpStatus.NOT_FOUND);
-      }
-      throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.manejoErrores.manejarError(error, 'actualizar alerta');
     }
   }
 
   @Delete(':uuid')
-  @ApiOperation({ summary: 'Eliminar una alerta (soft delete)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Alerta eliminada exitosamente.',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Alerta no encontrada.',
-  })
+  @ApiResponse({ status: 200, description: 'Alerta eliminada exitosamente.' })
+  @ApiResponse({ status: 404, description: 'Alerta no encontrada.' })
   async remove(@Param('uuid') uuid: string) {
     try {
-      const result = await this.alertasService.remove(uuid);
-      return result;
+      return await this.alertasService.remove(uuid);
     } catch (error) {
-      this.logger.error('Error al eliminar alerta:', error);
-      if (error.message.includes('no encontrada')) {
-        throw new HttpException('Alerta no encontrada', HttpStatus.NOT_FOUND);
-      }
-      throw new HttpException(`Error interno del servidor: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      this.manejoErrores.manejarError(error, 'eliminar alerta');
     }
   }
 }

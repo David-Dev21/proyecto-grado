@@ -2,7 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PersonaRepository } from '../interfaces/persona-repository.interface';
 import { ContactoRepository } from '../interfaces/contacto-repository.interface';
 import { CreateAlertaDto } from '../dto/create-alerta.dto';
-import { PersonaRepositoryToken, ContactoRepositoryToken } from '../constants/injection-tokens';
+import { PersonaRepositoryToken, ContactoRepositoryToken } from '../../constants/injection-tokens';
 
 @Injectable()
 export class PersonaService {

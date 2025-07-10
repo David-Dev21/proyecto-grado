@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ServicioProcesadorUbicacion } from 'src/alertas/services/ubicacion.service';
+import { ProcesadorUbicacionService } from 'src/alertas/services/procesador-ubicacion.service';
 
 @Injectable()
 export class UbicacionPollingService {
@@ -8,7 +8,7 @@ export class UbicacionPollingService {
 
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly procesadorUbicacion: ServicioProcesadorUbicacion,
+    private readonly procesadorUbicacion: ProcesadorUbicacionService,
   ) {}
 
   /**

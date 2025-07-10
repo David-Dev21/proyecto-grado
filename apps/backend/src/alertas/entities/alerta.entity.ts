@@ -1,122 +1,134 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { EstadoAlerta } from '@prisma/client';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import { EstadoAlerta, OrigenAlerta } from '../../common/enums/alerta.enum';
 
-export class PersonaEntity {
-  @ApiProperty({ description: 'ID de la persona' })
-  id: bigint;
+@Entity({ name: 'personas' })
+export class Persona {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @ApiProperty({ description: 'Nombres de la persona' })
+  @Column({ type: 'uuid', nullable: true })
+  uuid?: string;
+
+  @Column()
   nombres: string;
 
-  @ApiProperty({ description: 'Apellido paterno' })
+  @Column()
   ap_paterno: string;
 
-  @ApiProperty({ description: 'Apellido materno' })
+  @Column()
   ap_materno: string;
 
-  @ApiProperty({ description: 'Cédula de identidad' })
+  @Column()
   ci: string;
 
-  @ApiProperty({ description: 'Fecha de nacimiento' })
+  @Column({ type: 'timestamp' })
   fecha_nac: Date;
 
-  @ApiProperty({ description: 'Número de celular' })
+  @Column()
   celular: string;
 
-  @ApiProperty({ description: 'Correo electrónico' })
+  @Column()
   correo: string;
 
-  @ApiProperty({ description: 'Empresa telefónica' })
+  @Column()
   empresa_telefonica: string;
 
-  @ApiProperty({ description: 'Fecha de creación' })
+  @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: 'Fecha de actualización' })
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ApiProperty({ description: 'Fecha de eliminación', required: false })
+  @DeleteDateColumn()
   deleted_at?: Date;
+
+  @OneToMany(() => ContactoRef, (contacto) => contacto.persona)
+  contactos_ref?: ContactoRef[];
+
+  @OneToMany(() => Alerta, (alerta) => alerta.persona)
+  alertas?: Alerta[];
 }
 
-export class ContactoRefEntity {
-  @ApiProperty({ description: 'ID del contacto de referencia' })
-  id: bigint;
+@Entity({ name: 'contactos_ref' })
+export class ContactoRef {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @ApiProperty({ description: 'ID de la persona' })
-  id_persona: bigint;
+  @Column()
+  id_persona: number;
 
-  @ApiProperty({ description: 'Nombre del contacto' })
+  @Column()
   nombre: string;
 
-  @ApiProperty({ description: 'Relación con la persona' })
+  @Column()
   relacion: string;
 
-  @ApiProperty({ description: 'Número de celular del contacto' })
+  @Column()
   celular: string;
 
-  @ApiProperty({ description: 'Fecha de creación' })
+  @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: 'Fecha de actualización' })
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ApiProperty({ description: 'Fecha de eliminación', required: false })
+  @DeleteDateColumn()
   deleted_at?: Date;
+
+  @ManyToOne(() => Persona, (persona) => persona.contactos_ref)
+  @JoinColumn({ name: 'id_persona' })
+  persona: Persona;
 }
 
-export class AlertaEntity {
-  @ApiProperty({
-    description: 'ID único de la alerta',
-    example: '29a0c554-7456-4ee6-ae8f-65778d84a838',
-  })
-  id: string;
+@Entity({ name: 'alertas' })
+export class Alerta {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
 
-  @ApiProperty({ description: 'ID de la persona relacionada' })
-  id_persona: bigint;
+  @Column({ type: 'uuid' })
+  uuid: string;
 
-  @ApiProperty({ description: 'ID del municipio', required: false })
+  @Column()
+  id_persona: number;
+
+  @Column({ nullable: true })
   id_municipio?: string;
 
-  @ApiProperty({ description: 'Fecha y hora de la alerta' })
+  @Column({ type: 'timestamp' })
   fecha_hora: Date;
 
-  @ApiProperty({ description: 'CUD' })
+  @Column()
   nro_caso: string;
 
-  @ApiProperty({
-    description: 'Estado de la alerta',
-    enum: EstadoAlerta,
-    example: EstadoAlerta.EN_PELIGRO,
-  })
+  @Column({ type: 'enum', enum: EstadoAlerta })
   estado: EstadoAlerta;
 
-  @ApiProperty({
-    description: 'Origen de la alerta',
-    example: 'ATT',
-    required: false,
-  })
-  @ApiProperty({ description: 'Fecha de creación' })
+  @Column({ type: 'enum', enum: OrigenAlerta, nullable: true })
+  origen?: OrigenAlerta;
+
+  @CreateDateColumn()
   created_at: Date;
 
-  @ApiProperty({ description: 'Fecha de actualización' })
+  @UpdateDateColumn()
   updated_at: Date;
 
-  @ApiProperty({ description: 'Fecha de eliminación', required: false })
+  @DeleteDateColumn()
   deleted_at?: Date;
 
-  // Relaciones
-  @ApiProperty({
-    description: 'Información de la persona relacionada',
-    type: PersonaEntity,
-    required: false,
-  })
-  persona?: PersonaEntity;
+  @ManyToOne(() => Persona, (persona) => persona.alertas)
+  @JoinColumn({ name: 'id_persona' })
+  persona?: Persona;
 
-  @ApiProperty({
-    description: 'Contactos de referencia de la persona',
-    type: [ContactoRefEntity],
-    required: false,
-  })
-  contactos_ref?: ContactoRefEntity[];
+  @OneToMany(() => ContactoRef, (contacto) => contacto.persona)
+  contactos_ref?: ContactoRef[];
 }
