@@ -47,11 +47,7 @@ export const columns: ColumnDef<AlertaBackend>[] = [
       />
     ),
     cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Seleccionar fila"
-      />
+      <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Seleccionar fila" />
     ),
     enableSorting: false,
     enableHiding: false,
@@ -208,9 +204,9 @@ export const columns: ColumnDef<AlertaBackend>[] = [
       const nombreCompleto = `${persona.nombres} ${persona.ap_paterno} ${persona.ap_materno}`.toLowerCase();
       const ci = persona.ci?.toLowerCase() || '';
       const celular = persona.celular?.toLowerCase() || '';
-      const nroCaso = row.original.nro_caso?.toLowerCase() || '';
+      const codDenuncia = row.original.nro_caso?.toLowerCase() || '';
       const value = filterValue.toLowerCase();
-      return nombreCompleto.includes(value) || ci.includes(value) || celular.includes(value) || nroCaso.includes(value);
+      return nombreCompleto.includes(value) || ci.includes(value) || celular.includes(value) || codDenuncia.includes(value);
     },
   },
 ];

@@ -1,38 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
+import { CreateContactoData, UpdateContactoData, IContactoRef } from '../interfaces/contacto-repository.interface';
 import { ContactoRef } from '../entities/alerta.entity';
-import { IContactoRepository } from '@alertas/types';
+import { ContactoRepositoryInterface } from '../interfaces/contacto-repository.interface';
 
 @Injectable()
-export class ContactoRepository implements IContactoRepository {
+export class ContactoRepository implements ContactoRepositoryInterface {
   constructor(
     @InjectRepository(ContactoRef)
     private readonly repository: Repository<ContactoRef>,
   ) {}
 
-  async findAll(): Promise<ContactoRef[]> {
-    return this.repository.find({
-      where: { deleted_at: IsNull() },
+  async findAll(): Promise<IContactoRef[]> {
+    const contactos = await this.repository.find({
+      where: { deletedAt: IsNull() },
       relations: ['persona'],
     });
+    return contactos.map((c) => this.toInterface(c));
   }
 
-  async findOne(id: string): Promise<ContactoRef | null> {
-    return this.repository.findOne({
-      where: { id: parseInt(id), deleted_at: IsNull() },
+  async findOne(id: string): Promise<IContactoRef | null> {
+    const contacto = await this.repository.findOne({
+      where: { id: parseInt(id), deletedAt: IsNull() },
       relations: ['persona'],
     });
+    return contacto ? this.toInterface(contacto) : null;
   }
 
-  async create(data: Partial<ContactoRef>): Promise<ContactoRef> {
+  async create(data: CreateContactoData): Promise<IContactoRef> {
     const newContacto = this.repository.create(data);
-    return this.repository.save(newContacto);
+    const saved = await this.repository.save(newContacto);
+    return this.toInterface(saved);
   }
 
-  async update(id: string, data: Partial<ContactoRef>): Promise<ContactoRef> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, data);
-    const updated = await this.findOne(id);
+  async update(id: number, data: UpdateContactoData): Promise<IContactoRef> {
+    await this.repository.update({ id, deletedAt: IsNull() }, data);
+    const updated = await this.findOne(id.toString());
     if (!updated) {
       throw new Error('Contacto no encontrado');
     }
@@ -40,6 +44,28 @@ export class ContactoRepository implements IContactoRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, { deleted_at: new Date() });
+    await this.repository.update({ id: parseInt(id), deletedAt: IsNull() }, { deletedAt: new Date() });
+  }
+
+  async findByPersonaId(personaId: number): Promise<IContactoRef[]> {
+    const contactos = await this.repository.find({
+      where: { persona: { id: personaId }, deletedAt: IsNull() },
+      relations: ['persona'],
+    });
+    return contactos.map((c) => this.toInterface(c));
+  }
+
+  private toInterface(contacto: ContactoRef): IContactoRef {
+    return {
+      id: contacto.id,
+      idPersona: contacto.idPersona,
+      nombre: contacto.nombre,
+      relacion: contacto.relacion,
+      celular: contacto.celular,
+    };
+  }
+
+  async softDeleteByPersonaId(personaId: number): Promise<void> {
+    await this.repository.update({ persona: { id: personaId }, deletedAt: IsNull() }, { deletedAt: new Date() });
   }
 }

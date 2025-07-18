@@ -7,10 +7,10 @@ import { ContactosReferencia } from './ContactosReferencia';
 
 interface DatosVictimaProps {
   persona: PersonaBackend;
-  nroCaso?: string;
+  codDenuncia?: string;
 }
 
-export function DatosVictima({ persona, nroCaso }: DatosVictimaProps) {
+export function DatosVictima({ persona, codDenuncia }: DatosVictimaProps) {
   return (
     <Card className="col-span-1">
       <CardHeader>
@@ -59,7 +59,7 @@ export function DatosVictima({ persona, nroCaso }: DatosVictimaProps) {
             <FileText className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Número de caso</p>
-              <p className="text-foreground font-mono">{nroCaso || 'N/A'}</p>
+              <p className="text-foreground font-mono">{codDenuncia || 'N/A'}</p>
             </div>
           </div>
           <ContactosReferencia contactos={persona?.contactos_ref} />

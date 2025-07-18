@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, IsNull } from 'typeorm';
+import { Funcionario } from './entities/funcionario.entity';
 import { CreateFuncionarioDto } from './dto/create-funcionario.dto';
 import { UpdateFuncionarioDto } from './dto/update-funcionario.dto';
 
@@ -7,14 +9,15 @@ import { UpdateFuncionarioDto } from './dto/update-funcionario.dto';
 export class FuncionariosService {
   private readonly logger = new Logger(FuncionariosService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Funcionario)
+    private readonly funcionarioRepository: Repository<Funcionario>,
+  ) {}
 
   async create(createFuncionarioDto: CreateFuncionarioDto) {
     try {
-      const funcionario = await this.prisma.funcionarios.create({
-        data: createFuncionarioDto,
-      });
-
+      const funcionario = this.funcionarioRepository.create(createFuncionarioDto);
+      await this.funcionarioRepository.save(funcionario);
       return {
         message: 'Funcionario creado exitosamente',
         data: funcionario,
@@ -27,13 +30,9 @@ export class FuncionariosService {
 
   async findAll() {
     try {
-      return await this.prisma.funcionarios.findMany({
-        where: {
-          deleted_at: null,
-        },
-        orderBy: {
-          created_at: 'desc',
-        },
+      return await this.funcionarioRepository.find({
+        where: { deletedAt: IsNull() },
+        order: { grado: 'ASC' },
       });
     } catch (error) {
       this.logger.error('Error al obtener funcionarios:', error);
@@ -43,17 +42,10 @@ export class FuncionariosService {
 
   async findOne(id: string) {
     try {
-      const funcionario = await this.prisma.funcionarios.findFirst({
-        where: {
-          id,
-          deleted_at: null,
-        },
-      });
-
+      const funcionario = await this.funcionarioRepository.findOne({ where: { id, deletedAt: IsNull() } });
       if (!funcionario) {
         throw new NotFoundException(`Funcionario con ID ${id} no encontrado`);
       }
-
       return funcionario;
     } catch (error) {
       this.logger.error(`Error al obtener funcionario ${id}:`, error);
@@ -63,39 +55,26 @@ export class FuncionariosService {
 
   async update(id: string, updateFuncionarioDto: UpdateFuncionarioDto) {
     try {
-      const funcionario = await this.prisma.funcionarios.update({
-        where: { id },
-        data: updateFuncionarioDto,
-      });
-
+      await this.funcionarioRepository.update(id, updateFuncionarioDto);
+      const funcionario = await this.findOne(id);
       return {
         message: 'Funcionario actualizado exitosamente',
         data: funcionario,
       };
     } catch (error) {
       this.logger.error(`Error al actualizar funcionario ${id}:`, error);
-      if (error.code === 'P2025') {
-        throw new NotFoundException(`Funcionario con ID ${id} no encontrado`);
-      }
       throw error;
     }
   }
 
   async remove(id: string) {
     try {
-      await this.prisma.funcionarios.update({
-        where: { id },
-        data: { deleted_at: new Date() },
-      });
-
+      await this.funcionarioRepository.update(id, { deletedAt: new Date() });
       return {
         message: 'Funcionario eliminado exitosamente',
       };
     } catch (error) {
       this.logger.error(`Error al eliminar funcionario ${id}:`, error);
-      if (error.code === 'P2025') {
-        throw new NotFoundException(`Funcionario con ID ${id} no encontrado`);
-      }
       throw error;
     }
   }

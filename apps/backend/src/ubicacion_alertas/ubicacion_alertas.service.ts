@@ -6,6 +6,16 @@ import { Point } from 'geojson';
 
 @Injectable()
 export class UbicacionAlertasService {
+  async existeUbicacion(idAlerta: number, fechaHora: Date, latitud: number, longitud: number): Promise<boolean> {
+    // Busca si existe una ubicación con los mismos datos (sin considerar eliminados)
+    const ubicaciones = await this.ubicacionAlertasRepository.findByAlertaId(idAlerta);
+    return ubicaciones.some((u) => {
+      const fechaMatch = u.fechaHora.getTime() === fechaHora.getTime();
+      const latMatch = u.ubicacion.coordinates[1] === latitud;
+      const lngMatch = u.ubicacion.coordinates[0] === longitud;
+      return fechaMatch && latMatch && lngMatch;
+    });
+  }
   private readonly logger = new Logger(UbicacionAlertasService.name);
 
   constructor(private readonly ubicacionAlertasRepository: UbicacionAlertasRepository) {}
@@ -18,8 +28,8 @@ export class UbicacionAlertasService {
       };
 
       const ubicacion = await this.ubicacionAlertasRepository.create({
-        idAlerta: createUbicacionAlertaDto.id_alerta,
-        fechaHora: new Date(createUbicacionAlertaDto.fecha_hora),
+        idAlerta: createUbicacionAlertaDto.idAlerta,
+        fechaHora: new Date(createUbicacionAlertaDto.fechaHora),
         ubicacion: point,
       });
 
@@ -28,7 +38,7 @@ export class UbicacionAlertasService {
         data: {
           ...ubicacion,
           id: ubicacion.id.toString(),
-          id_alerta: ubicacion.id_alerta.toString(),
+          idAlerta: ubicacion.idAlerta.toString(),
         },
       };
     } catch (error) {
@@ -90,63 +100,26 @@ export class UbicacionAlertasService {
         idAlerta: ubicacion.idAlerta.toString(),
       }));
     } catch (error) {
-      this.logger.error(`Error al obtener ubicaciones de alerta ${id_alerta}:`, error);
+      this.logger.error(`Error al obtener ubicaciones de alerta ${idAlerta}:`, error);
       throw new BadRequestException('Error al obtener las ubicaciones de la alerta');
     }
   }
 
-  async findAllForAlerta(idAlerta: number) {
-    try {
-      const ubicaciones = await this.prisma.ubicacionAlerta.findMany({
-        where: {
-          id_alerta: BigInt(idAlerta),
-          deleted_at: null,
-        },
-        orderBy: {
-          fecha_hora: 'desc',
-        },
-      });
-
-      return ubicaciones.map((ubicacion) => ({
-        ...ubicacion,
-        id: ubicacion.id.toString(),
-        id_alerta: ubicacion.id_alerta.toString(),
-      }));
-    } catch (error) {
-      this.logger.error(`Error al obtener ubicaciones para la alerta ${idAlerta}:`, error);
-      throw new BadRequestException(`Error al obtener las ubicaciones para la alerta ${idAlerta}`);
-    }
-  }
-
-  async existeUbicacion(idAlerta: number, fechaHora: Date, latitud: number, longitud: number): Promise<boolean> {
-    try {
-      const ubicacionExistente = await this.prisma.ubicacionAlerta.findFirst({
-        where: {
-          id_alerta: BigInt(idAlerta),
-          fecha_hora: fechaHora,
-          latitud: latitud,
-          longitud: longitud,
-          deleted_at: null,
-        },
-      });
-
-      return !!ubicacionExistente;
-    } catch (error) {
-      this.logger.error('Error al verificar ubicación existente:', error);
-      return false; // En caso de error, permitir el intento de creación
-    }
-  }
+  // Métodos findAllForAlerta y existeUbicacion eliminados: migración completa a TypeORM
 
   async update(id: string, updateUbicacionAlertaDto: UpdateUbicacionAlertaDto) {
     try {
-      const point: Point = {
-        type: 'Point',
-        coordinates: [updateUbicacionAlertaDto.longitud, updateUbicacionAlertaDto.latitud],
-      };
+      let point: Point | undefined = undefined;
+      if (typeof updateUbicacionAlertaDto.longitud === 'number' && typeof updateUbicacionAlertaDto.latitud === 'number') {
+        point = {
+          type: 'Point',
+          coordinates: [updateUbicacionAlertaDto.longitud, updateUbicacionAlertaDto.latitud],
+        };
+      }
 
       const ubicacion = await this.ubicacionAlertasRepository.update(id, {
-        ubicacion: point,
-        fechaHora: updateUbicacionAlertaDto.fecha_hora ? new Date(updateUbicacionAlertaDto.fecha_hora) : undefined,
+        ...(point ? { ubicacion: point } : {}),
+        fechaHora: updateUbicacionAlertaDto.fechaHora ? new Date(updateUbicacionAlertaDto.fechaHora) : undefined,
       });
 
       return {

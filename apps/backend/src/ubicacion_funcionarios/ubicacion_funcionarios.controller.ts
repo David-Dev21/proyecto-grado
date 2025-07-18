@@ -23,11 +23,7 @@ export class UbicacionFuncionariosController {
   })
   async create(@Body() createUbicacionFuncionarioDto: CreateUbicacionFuncionarioDto) {
     try {
-      const result = await this.ubicacionFuncionariosService.create(createUbicacionFuncionarioDto);
-      if (!result) {
-        throw new HttpException('No se pudo crear la ubicación del funcionario', HttpStatus.BAD_REQUEST);
-      }
-      return result;
+      return await this.ubicacionFuncionariosService.create(createUbicacionFuncionarioDto);
     } catch (error) {
       this.logger.error('Error al crear ubicación de funcionario:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -62,32 +58,14 @@ export class UbicacionFuncionariosController {
   })
   async findOne(@Param('id') id: string) {
     try {
-      const result = await this.ubicacionFuncionariosService.findOne(+id);
-      if (!result) {
-        throw new HttpException('Ubicación de funcionario no encontrada', HttpStatus.NOT_FOUND);
-      }
-      return result;
+      return await this.ubicacionFuncionariosService.findOne(Number(id));
     } catch (error) {
       this.logger.error('Error al obtener ubicación de funcionario:', error);
-      if (error.status === HttpStatus.NOT_FOUND) {
-        throw error;
-      }
-      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException('Ubicación de funcionario no encontrada', HttpStatus.NOT_FOUND);
     }
   }
 
-  @Get('atencion/:id_atencion')
-  @ApiOperation({ summary: 'Obtener ubicaciones por ID de atención' })
-  @ApiParam({ name: 'id_atencion', type: 'string', description: 'ID de la atención' })
-  @ApiResponse({ status: 200, description: 'Ubicaciones de la atención' })
-  async findByAtencion(@Param('id_atencion') id_atencion: string) {
-    try {
-      return await this.ubicacionFuncionariosService.findByAtencion(+id_atencion);
-    } catch (error) {
-      this.logger.error('Error al obtener ubicaciones por atención:', error);
-      throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
+  // ...existing code...
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar una ubicación de funcionario' })
@@ -96,16 +74,9 @@ export class UbicacionFuncionariosController {
   @ApiResponse({ status: 404, description: 'Ubicación no encontrada' })
   async update(@Param('id') id: string, @Body() updateUbicacionFuncionarioDto: UpdateUbicacionFuncionarioDto) {
     try {
-      const result = await this.ubicacionFuncionariosService.update(+id, updateUbicacionFuncionarioDto);
-      if (!result) {
-        throw new HttpException('Ubicación de funcionario no encontrada', HttpStatus.NOT_FOUND);
-      }
-      return result;
+      return await this.ubicacionFuncionariosService.update(Number(id), updateUbicacionFuncionarioDto);
     } catch (error) {
       this.logger.error('Error al actualizar ubicación de funcionario:', error);
-      if (error.status === HttpStatus.NOT_FOUND) {
-        throw error;
-      }
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -115,18 +86,12 @@ export class UbicacionFuncionariosController {
   @ApiParam({ name: 'id', type: 'string', description: 'ID de la ubicación de funcionario' })
   @ApiResponse({ status: 200, description: 'Ubicación eliminada exitosamente' })
   @ApiResponse({ status: 404, description: 'Ubicación no encontrada' })
-  async remove(@Param('id') id: string) {
+  async delete(@Param('id') id: string) {
     try {
-      const result = await this.ubicacionFuncionariosService.remove(+id);
-      if (!result) {
-        throw new HttpException('Ubicación de funcionario no encontrada', HttpStatus.NOT_FOUND);
-      }
-      return result;
+      await this.ubicacionFuncionariosService.delete(Number(id));
+      return { message: 'Ubicación de funcionario eliminada exitosamente' };
     } catch (error) {
       this.logger.error('Error al eliminar ubicación de funcionario:', error);
-      if (error.status === HttpStatus.NOT_FOUND) {
-        throw error;
-      }
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

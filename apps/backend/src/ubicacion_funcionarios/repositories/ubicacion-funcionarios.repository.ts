@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { UbicacionFuncionario } from '../entities/ubicacion-funcionario.entity';
-import { IUbicacionFuncionariosRepository } from '@alertas/types';
-import { CreateUbicacionFuncionarioDto } from '../dto/create-ubicacion-funcionario.dto';
+import { CreateUbicacionFuncionarioDto } from '../dto/create-ubicacion_funcionario.dto';
 
 @Injectable()
-export class UbicacionFuncionariosRepository implements IUbicacionFuncionariosRepository {
+export class UbicacionFuncionariosRepository {
   constructor(
     @InjectRepository(UbicacionFuncionario)
     private readonly repository: Repository<UbicacionFuncionario>,
@@ -30,10 +29,12 @@ export class UbicacionFuncionariosRepository implements IUbicacionFuncionariosRe
     return ubicacion;
   }
 
-  async create(data: CreateUbicacionFuncionarioDto): Promise<UbicacionFuncionario> {
+  async create(data: any): Promise<UbicacionFuncionario> {
     const newUbicacion = this.repository.create(data);
     const savedUbicacion = await this.repository.save(newUbicacion);
-    return this.findOne(savedUbicacion.id.toString());
+    // If save returns an array, get the first element
+    const entity = Array.isArray(savedUbicacion) ? savedUbicacion[0] : savedUbicacion;
+    return this.findOne(String(entity.id));
   }
 
   async update(id: string, data: Partial<UbicacionFuncionario>): Promise<UbicacionFuncionario> {
@@ -53,15 +54,5 @@ export class UbicacionFuncionariosRepository implements IUbicacionFuncionariosRe
     });
   }
 
-  async getLastLocation(idFuncionario: string): Promise<UbicacionFuncionario | null> {
-    return this.repository.findOne({
-      where: { id_funcionario: idFuncionario, deleted_at: IsNull() },
-      relations: ['atencion'],
-      order: { fecha_hora: 'DESC' },
-    });
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.repository.delete(id);
-  }
+  // Remove getLastLocation or update to match entity if needed
 }

@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Logger } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiCreatedResponse } from '@nestjs/swagger';
-import { AlertaEntity } from './entities/alerta.entity';
 import { AlertasService } from './alertas.service';
 import { CreateAlertaDto } from './dto/create-alerta.dto';
 import { UpdateAlertaDto } from './dto/update-alerta.dto';
@@ -43,7 +42,7 @@ export class AlertasController {
   }
 
   @Get()
-  @ApiCreatedResponse({ type: AlertaEntity, isArray: true })
+  @ApiCreatedResponse({ isArray: true })
   @ApiResponse({ status: 200, description: 'Lista de alertas obtenida exitosamente.' })
   async findAll() {
     try {
@@ -54,7 +53,7 @@ export class AlertasController {
   }
 
   @Get(':uuid')
-  @ApiCreatedResponse({ type: AlertaEntity })
+  @ApiCreatedResponse()
   @ApiResponse({ status: 200, description: 'Alerta encontrada exitosamente.' })
   @ApiResponse({ status: 404, description: 'Alerta no encontrada.' })
   async findOne(@Param('uuid') uuid: string) {

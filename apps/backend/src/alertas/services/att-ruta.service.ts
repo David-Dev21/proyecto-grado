@@ -5,7 +5,15 @@ import { ServicioSistemaExterno, DatosRuta } from '../interfaces/att-ruta.interf
 export class ServicioSistemaExternoAtt implements ServicioSistemaExterno {
   private readonly logger = new Logger(ServicioSistemaExternoAtt.name);
   private readonly urlBase = process.env.ATT_BASE_URL || 'https://test.att.gob.bo/acompaname/index.php';
-  private readonly tokenAuth = process.env.ATT_AUTH_TOKEN || 'Bearer Token';
+  private readonly tokenAuth: string;
+
+  constructor() {
+    if (!process.env.ATT_AUTH_TOKEN) {
+      // this.logger.error('La variable de entorno ATT_AUTH_TOKEN no está definida.');
+      throw new Error('La variable de entorno ATT_AUTH_TOKEN no está definida.');
+    }
+    this.tokenAuth = process.env.ATT_AUTH_TOKEN;
+  }
 
   async obtenerRuta(uuidAlerta: string): Promise<DatosRuta[] | null> {
     try {
@@ -22,19 +30,10 @@ export class ServicioSistemaExternoAtt implements ServicioSistemaExterno {
         },
       });
 
-      if (!respuesta.ok) {
-        throw new Error(`Error del servicio externo: ${respuesta.status} - ${respuesta.statusText}`);
-      }
-
       const responseData = await respuesta.json();
 
       // Verificar que la respuesta tenga la estructura esperada
-      if (
-        !responseData.finalizado ||
-        !responseData.datos ||
-        !Array.isArray(responseData.datos) ||
-        responseData.datos.length === 0
-      ) {
+      if (!responseData.finalizado || !responseData.datos || !Array.isArray(responseData.datos) || responseData.datos.length === 0) {
         this.logger.warn(`Respuesta de ATT no contiene datos válidos para alerta ${uuidAlerta}`);
         return null;
       }

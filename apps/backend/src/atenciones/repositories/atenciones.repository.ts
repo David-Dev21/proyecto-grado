@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Atencion } from '../entities/atencion.entity';
-import { IAtencionesRepository } from '@alertas/types';
 import { CreateAtencionDto } from '../dto/create-atencion.dto';
+import { AtencionesRepositoryInterface } from '../interfaces/atencion-repository.interface';
 
 @Injectable()
-export class AtencionesRepository implements IAtencionesRepository {
+export class AtencionesRepository implements AtencionesRepositoryInterface {
   constructor(
     @InjectRepository(Atencion)
     private readonly repository: Repository<Atencion>,
@@ -14,14 +14,14 @@ export class AtencionesRepository implements IAtencionesRepository {
 
   async findAll(): Promise<Atencion[]> {
     return this.repository.find({
-      where: { deleted_at: IsNull() },
+      where: { deletedAt: IsNull() },
       relations: ['alerta', 'funcionarios'],
     });
   }
 
-  async findOne(id: string): Promise<Atencion> {
+  async findOne(id: number): Promise<Atencion> {
     const atencion = await this.repository.findOne({
-      where: { id: parseInt(id), deleted_at: IsNull() },
+      where: { id, deletedAt: IsNull() },
       relations: ['alerta', 'funcionarios'],
     });
     if (!atencion) {
@@ -33,29 +33,29 @@ export class AtencionesRepository implements IAtencionesRepository {
   async create(data: CreateAtencionDto): Promise<Atencion> {
     const newAtencion = this.repository.create(data);
     const savedAtencion = await this.repository.save(newAtencion);
-    return this.findOne(savedAtencion.id.toString());
+    return this.findOne(savedAtencion.id);
   }
 
-  async update(id: string, data: Partial<Atencion>): Promise<Atencion> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, data);
+  async update(id: number, data: Partial<Atencion>): Promise<Atencion> {
+    await this.repository.update({ id, deletedAt: IsNull() }, data);
     return this.findOne(id);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, { deleted_at: new Date() });
+  async delete(id: number): Promise<void> {
+    await this.repository.update({ id, deletedAt: IsNull() }, { deletedAt: new Date() });
   }
 
   async findByAlertaId(idAlerta: number): Promise<Atencion[]> {
     return this.repository.find({
-      where: { id_alerta: idAlerta, deleted_at: IsNull() },
+      where: { idAlerta: idAlerta, deletedAt: IsNull() },
       relations: ['alerta', 'funcionarios'],
-      order: { fecha_hora: 'DESC' },
+      order: { fechaHora: 'DESC' },
     });
   }
 
   async findByUsuarioDespachador(usuarioDespachador: string): Promise<Atencion[]> {
     return this.repository.find({
-      where: { usuario_despachador: usuarioDespachador, deleted_at: IsNull() },
+      where: { usuarioDespachador: usuarioDespachador, deletedAt: IsNull() },
       relations: ['alerta', 'funcionarios'],
     });
   }

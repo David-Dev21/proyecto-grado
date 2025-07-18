@@ -1,13 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  DeleteDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Alerta } from '../../alertas/entities/alerta.entity';
 import { Point } from 'geojson';
 
@@ -17,13 +8,16 @@ export class Evento {
   id: number;
 
   @Column({ type: 'bigint' })
-  id_alerta: number;
+  idAlerta: number;
 
   @Column({ nullable: true })
-  id_funcionario: string;
+  idFuncionario: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  idSeguimiento?: string;
 
   @Column({ type: 'timestamp' })
-  fecha_hora: Date;
+  fechaHora: Date;
 
   @Column('geography', {
     spatialFeatureType: 'Point',
@@ -35,14 +29,14 @@ export class Evento {
   @Column('text')
   comentario: string;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
 
-  @DeleteDateColumn()
-  deleted_at?: Date;
+  @DeleteDateColumn({ name: 'deleted_at' })
+  deletedAt?: Date;
 
   @ManyToOne(() => Alerta)
   @JoinColumn({ name: 'id_alerta' })

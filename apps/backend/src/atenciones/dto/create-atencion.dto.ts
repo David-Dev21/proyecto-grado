@@ -7,9 +7,9 @@ class FuncionarioAsignadoDto {
     example: '123e4567-e89b-12d3-a456-426614174000',
     required: false,
   })
-  @IsString({ message: 'id_funcionario debe ser una cadena de texto' })
+  @IsString({ message: 'idFuncionario debe ser una cadena de texto' })
   @IsOptional()
-  id_funcionario?: string;
+  idFuncionario?: string;
 
   @ApiProperty({
     example: true,
@@ -23,31 +23,31 @@ export class CreateAtencionDto {
   @ApiProperty({
     example: 1,
   })
-  @IsNumber({}, { message: 'id_alerta debe ser un número' })
-  @IsNotEmpty({ message: 'id_alerta no debe estar vacío' })
-  id_alerta: number;
+  @IsNumber({}, { message: 'idAlerta debe ser un número' })
+  @IsNotEmpty({ message: 'idAlerta no debe estar vacío' })
+  idAlerta: number;
 
   @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString({ message: 'usuario_despachador debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'usuario_despachador no debe estar vacío' })
-  usuario_despachador: string;
+  @IsString({ message: 'usuarioDespachador debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'usuarioDespachador no debe estar vacío' })
+  usuarioDespachador: string;
 
   @ApiProperty({
     example: 'VEH-001',
   })
-  @IsString({ message: 'id_vehiculo debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'id_vehiculo no debe estar vacío' })
-  id_vehiculo: string;
+  @IsString({ message: 'codVehiculo debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'codVehiculo no debe estar vacío' })
+  codVehiculo: string;
 
   @ApiProperty({
     example: 'RADIO-01',
     required: false,
   })
-  @IsString({ message: 'sigla_radio debe ser una cadena de texto' })
+  @IsString({ message: 'siglaRadio debe ser una cadena de texto' })
   @IsOptional()
-  sigla_radio?: string;
+  siglaRadio?: string;
 
   @ApiProperty({
     type: [FuncionarioAsignadoDto],

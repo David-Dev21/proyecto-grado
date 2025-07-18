@@ -25,7 +25,8 @@ export function useUbicacionesAlerta(idAlerta: string) {
   };
 
   useEffect(() => {
-    if (idAlerta && idAlerta.trim() !== '') {
+    const idAlertaStr = String(idAlerta ?? '');
+    if (idAlertaStr.trim() !== '') {
       fetchUbicaciones();
     } else {
       setLoading(false);

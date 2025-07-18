@@ -4,15 +4,15 @@ import { Type } from 'class-transformer';
 import { CreateAtencionDto } from './create-atencion.dto';
 
 class ActualizarFuncionarioDto {
-  @ApiProperty({ 
-    required: false
+  @ApiProperty({
+    required: false,
   })
-  @IsString({ message: 'id_funcionario debe ser una cadena de texto' })
+  @IsString({ message: 'idFuncionario debe ser una cadena de texto' })
   @IsOptional()
-  id_funcionario?: string;
+  idFuncionario?: string;
 
-  @ApiProperty({ 
-    required: false
+  @ApiProperty({
+    required: false,
   })
   @IsBoolean({ message: 'encargado debe ser un valor booleano' })
   @IsOptional()
@@ -20,9 +20,9 @@ class ActualizarFuncionarioDto {
 }
 
 export class UpdateAtencionDto extends PartialType(OmitType(CreateAtencionDto, ['funcionarios'] as const)) {
-  @ApiProperty({ 
+  @ApiProperty({
     type: [ActualizarFuncionarioDto],
-    required: false
+    required: false,
   })
   @IsArray({ message: 'funcionarios debe ser un arreglo' })
   @ValidateNested({ each: true })

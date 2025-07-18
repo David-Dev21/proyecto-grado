@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { EstadoAlerta, type EstadoAlertaType } from '@alertas/types';
+import { EstadoAlerta, type EstadoAlertaType } from '../../types/alerta.enum';
 
 interface AlertaBadgeProps {
   estado: EstadoAlertaType;
@@ -10,7 +10,7 @@ export function AlertaBadge({ estado }: AlertaBadgeProps) {
     switch (estado) {
       case EstadoAlerta.EN_PELIGRO:
         return 'bg-red-500 hover:bg-red-600 text-white';
-      case EstadoAlerta.ATENDIDO:
+      case EstadoAlerta.CERRADA:
         return 'bg-green-500 hover:bg-green-600 text-white';
       case EstadoAlerta.EN_CAMINO:
         return 'bg-yellow-700 hover:bg-yellow-600 text-white';

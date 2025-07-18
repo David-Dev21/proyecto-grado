@@ -15,12 +15,7 @@ import { PersonaRepository } from './repositories/persona.repository';
 import { ContactoRepository } from './repositories/contacto.repository';
 import { ProcesadorNotificacionesService } from './services/procesador-notificaciones.service';
 import { ManejoErroresService } from './services/manejo-errores.service';
-import {
-  PersonaRepositoryToken,
-  ContactoRepositoryToken,
-  AlertaRepositoryToken,
-  ServicioSistemaExternoToken,
-} from '../constants/injection-tokens';
+import { PersonaRepositoryToken, ContactoRepositoryToken, AlertaRepositoryToken, ServicioSistemaExternoToken } from '../constants/injection-tokens';
 import { Alerta, Persona, ContactoRef } from './entities/alerta.entity';
 
 // Tokens para inyección de dependencias
@@ -30,7 +25,7 @@ import { Alerta, Persona, ContactoRef } from './entities/alerta.entity';
   imports: [
     TypeOrmModule.forFeature([Alerta, Persona, ContactoRef]),
     UbicacionAlertasModule,
-    AtencionesModule,
+    forwardRef(() => AtencionesModule),
     forwardRef(() => EventsModule),
   ],
   controllers: [AlertasController],
@@ -62,14 +57,9 @@ import { Alerta, Persona, ContactoRef } from './entities/alerta.entity';
       useClass: ServicioSistemaExternoAtt,
     },
   ],
-  exports: [ProcesadorUbicacionService],
+  exports: [ProcesadorUbicacionService, AlertaRepositoryToken],
 })
 export class AlertasModule {}
 
 // Re-exportar los tokens para uso externo si es necesario
-export {
-  PersonaRepositoryToken,
-  ContactoRepositoryToken,
-  AlertaRepositoryToken,
-  ServicioSistemaExternoToken,
-} from '../constants/injection-tokens';
+export { PersonaRepositoryToken, ContactoRepositoryToken, AlertaRepositoryToken, ServicioSistemaExternoToken } from '../constants/injection-tokens';

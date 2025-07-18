@@ -93,7 +93,7 @@ export class ProcesadorUbicacionService {
         const latitud = parseFloat(datosRuta.latitud);
         const longitud = parseFloat(datosRuta.longitud);
 
-        // Verificar si la ubicación ya existe
+        // Validar duplicado antes de crear
         const yaExiste = await this.ubicacionAlertasService.existeUbicacion(Number(alerta.id), fechaHora, latitud, longitud);
 
         if (yaExiste) {
@@ -103,8 +103,8 @@ export class ProcesadorUbicacionService {
         }
 
         const datosUbicacion: CreateUbicacionAlertaDto = {
-          id_alerta: Number(alerta.id),
-          fecha_hora: fechaHora.toISOString(),
+          idAlerta: Number(alerta.id),
+          fechaHora: fechaHora.toISOString(),
           latitud: latitud,
           longitud: longitud,
         };

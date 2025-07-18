@@ -2,10 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('funcionarios')
 export class Funcionario {
-  @PrimaryGeneratedColumn('bigint')
-  id: string;
-
-  @Column('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column('varchar')
@@ -19,4 +16,7 @@ export class Funcionario {
 
   @Column('varchar')
   apMaterno: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt?: Date;
 }

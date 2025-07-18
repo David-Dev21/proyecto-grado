@@ -8,7 +8,7 @@ export class CreateUbicacionAlertaDto {
   })
   @IsNotEmpty({ message: 'El ID de alerta es requerido' })
   @IsNumber({}, { message: 'El ID de alerta debe ser un número' })
-  id_alerta: number;
+  idAlerta: number;
 
   @ApiProperty({
     example: '2025-06-30T10:30:00Z',
@@ -16,7 +16,7 @@ export class CreateUbicacionAlertaDto {
   })
   @IsNotEmpty({ message: 'La fecha y hora es requerida' })
   @IsDateString({}, { message: 'La fecha y hora debe ser una fecha válida' })
-  fecha_hora: string;
+  fechaHora: string;
 
   @ApiProperty({
     example: -16.5,

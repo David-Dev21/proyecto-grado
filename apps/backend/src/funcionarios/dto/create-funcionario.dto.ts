@@ -22,15 +22,15 @@ export class CreateFuncionarioDto {
     example: 'Pérez',
     description: 'Apellido paterno del funcionario',
   })
-  @IsString({ message: 'ap_paterno debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'ap_paterno no debe estar vacío' })
-  ap_paterno: string;
+  @IsString({ message: 'apPaterno debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'apPaterno no debe estar vacío' })
+  apPaterno: string;
 
   @ApiProperty({
     example: 'López',
     description: 'Apellido materno del funcionario',
   })
-  @IsString({ message: 'ap_materno debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'ap_materno no debe estar vacío' })
-  ap_materno: string;
+  @IsString({ message: 'apMaterno debe ser una cadena de texto' })
+  @IsNotEmpty({ message: 'apMaterno no debe estar vacío' })
+  apMaterno: string;
 }

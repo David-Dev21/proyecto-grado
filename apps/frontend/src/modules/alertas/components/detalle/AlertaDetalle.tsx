@@ -165,7 +165,7 @@ export function AlertaDetalle({ uuid }: AlertaDetalleProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Primera fila: Datos de la víctima y Personal asignado */}
-        {alerta.persona && <DatosVictima persona={alerta.persona} nroCaso={alerta.nro_caso} />}
+        {alerta.persona && <DatosVictima persona={alerta.persona} codDenuncia={alerta.nro_caso} />}
         <PersonalAsignado alertaUuid={alerta.uuid} idAlerta={parseInt(alerta.id)} estado={alerta.estado} />
 
         {/* Segunda fila: Ubicaciones combinadas */}
@@ -188,8 +188,8 @@ export function AlertaDetalle({ uuid }: AlertaDetalleProps) {
               <DialogHeader>
                 <DialogTitle>Agregar Evento</DialogTitle>
                 <DialogDescription>
-                  Registra un nuevo evento relacionado con esta alerta. Los eventos documentan las acciones tomadas durante el
-                  manejo del caso.
+                  Registra un nuevo evento relacionado con esta alerta. Los eventos documentan las acciones tomadas durante el manejo del
+                  caso.
                 </DialogDescription>
               </DialogHeader>
               <EventoForm
@@ -208,8 +208,7 @@ export function AlertaDetalle({ uuid }: AlertaDetalleProps) {
               <DialogHeader>
                 <DialogTitle>Finalizar Caso</DialogTitle>
                 <DialogDescription>
-                  Completa la información para cerrar este caso definitivamente. Asegúrate de proporcionar todos los detalles
-                  requeridos.
+                  Completa la información para cerrar este caso definitivamente. Asegúrate de proporcionar todos los detalles requeridos.
                 </DialogDescription>
               </DialogHeader>
               <CierreAlertaForm

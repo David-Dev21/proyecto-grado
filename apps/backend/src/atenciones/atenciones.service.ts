@@ -1,54 +1,52 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { CreateAtencionDto } from './dto/create-atencion.dto';
 import { UpdateAtencionDto } from './dto/update-atencion.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { EstadoAlerta } from '@prisma/client';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Atencion, AtencionFuncionario } from './entities/atencion.entity';
+import { AlertaRepositoryToken } from 'src/constants/injection-tokens';
+import { Alerta } from '../alertas/entities/alerta.entity';
+import { EstadoAlerta } from '../common/enums/alerta.enum';
 
 @Injectable()
 export class AtencionesService {
   private readonly logger = new Logger(AtencionesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Atencion)
+    private readonly atencionRepository: Repository<Atencion>,
+    @Inject(AlertaRepositoryToken)
+    private readonly alertaRepository: any,
+    @InjectRepository(AtencionFuncionario)
+    private readonly atencionFuncionarioRepository: Repository<AtencionFuncionario>,
+  ) {}
 
   async create(createAtencionDto: CreateAtencionDto) {
     try {
-      // Usar transacción para crear atención y cambiar estado de alerta
-      await this.prisma.$transaction(async (prisma) => {
-        // Verificar si ya existe una atención para esta alerta
-        const atencionExistente = await prisma.atencion.findUnique({
-          where: { id_alerta: BigInt(createAtencionDto.id_alerta) },
-        });
-
-        if (atencionExistente) {
-          throw new Error('Ya existe personal asignado para esta alerta');
-        }
-
-        // Crear nueva atención
-        const atencion = await prisma.atencion.create({
-          data: {
-            id_alerta: BigInt(createAtencionDto.id_alerta),
-            usuario_despachador: createAtencionDto.usuario_despachador,
-            id_vehiculo: createAtencionDto.id_vehiculo,
-            sigla_radio: createAtencionDto.sigla_radio,
-          },
-        });
-
-        // Crear los funcionarios asignados
-        await prisma.atencionFuncionario.createMany({
-          data: createAtencionDto.funcionarios.map((funcionario) => ({
-            id_atencion: atencion.id,
-            id_funcionario: funcionario.id_funcionario,
-            encargado: funcionario.encargado,
-          })),
-        });
-
-        // Cambiar el estado de la alerta a EN_CAMINO
-        await prisma.alerta.update({
-          where: { id: BigInt(createAtencionDto.id_alerta) },
-          data: { estado: EstadoAlerta.EN_CAMINO },
-        });
+      const atencionExistente = await this.atencionRepository.findOne({
+        where: { idAlerta: createAtencionDto.idAlerta },
       });
-
+      if (atencionExistente) {
+        throw new Error('Ya existe personal asignado para esta alerta');
+      }
+      const atencion = this.atencionRepository.create({
+        idAlerta: createAtencionDto.idAlerta,
+        usuarioDespachador: createAtencionDto.usuarioDespachador,
+        codVehiculo: createAtencionDto.codVehiculo,
+        siglaRadio: createAtencionDto.siglaRadio,
+      });
+      await this.atencionRepository.save(atencion);
+      if (createAtencionDto.funcionarios && createAtencionDto.funcionarios.length > 0) {
+        const funcionarios = createAtencionDto.funcionarios.map((funcionario) => {
+          return this.atencionFuncionarioRepository.create({
+            idAtencion: atencion.id,
+            idFuncionario: funcionario.idFuncionario,
+            encargado: funcionario.encargado,
+          });
+        });
+        await this.atencionFuncionarioRepository.save(funcionarios);
+      }
+      await this.alertaRepository.update({ id: createAtencionDto.idAlerta }, { estado: EstadoAlerta.EN_CAMINO });
       return {
         message: 'Personal policial asignado correctamente',
         success: true,
@@ -60,179 +58,85 @@ export class AtencionesService {
   }
 
   async findAll() {
-    return this.prisma.atencion.findMany({
-      where: {
-        deleted_at: null,
-      },
-      include: {
-        atencion_funcionario: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
+    return this.atencionRepository.find({
+      where: { deletedAt: undefined },
+      relations: ['funcionarios'],
     });
   }
 
   async findAllWithAlerts() {
-    return this.prisma.atencion.findMany({
-      where: {
-        deleted_at: null,
-      },
-      include: {
-        alerta: {
-          select: {
-            nro_caso: true,
-            persona: {
-              select: {
-                nombres: true,
-                ap_paterno: true,
-                ap_materno: true,
-              },
-            },
-          },
-        },
-        atencion_funcionario: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
+    return this.atencionRepository.find({
+      where: { deletedAt: undefined },
+      relations: ['alerta', 'alerta.persona', 'funcionarios'],
     });
   }
 
   async findOne(id: number) {
-    const atencion = await this.prisma.atencion.findFirst({
-      where: {
-        id: BigInt(id),
-        deleted_at: null,
-      },
-      include: {
-        atencion_funcionario: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
+    const atencion = await this.atencionRepository.findOne({
+      where: { id, deletedAt: undefined },
+      relations: ['funcionarios'],
     });
-
     if (!atencion) {
       throw new Error('Atención no encontrada');
     }
-
     return atencion;
   }
 
   async findByAlertaId(alertaId: number) {
-    // Buscar la atención usando directamente el ID de la alerta
-    const atencion = await this.prisma.atencion.findFirst({
-      where: {
-        id_alerta: BigInt(alertaId),
-        deleted_at: null,
-      },
-      include: {
-        atencion_funcionario: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
+    const atencion = await this.atencionRepository.findOne({
+      where: { idAlerta: alertaId, deletedAt: undefined },
+      relations: ['funcionarios'],
     });
-
     if (!atencion) {
       throw new Error('No hay atención asignada para esta alerta');
     }
-
     return atencion;
   }
 
   async findByAlertaUuid(alertaUuid: string) {
-    // Primero obtener el ID de la alerta usando su UUID
-    const alerta = await this.prisma.alerta.findFirst({
-      where: {
-        uuid: alertaUuid,
-        deleted_at: null,
-      },
+    const alerta = await this.alertaRepository.findOne({
+      where: { uuid: alertaUuid, deletedAt: undefined },
     });
-
     if (!alerta) {
       throw new Error('Alerta no encontrada');
     }
-
-    // Luego buscar la atención usando el ID de la alerta
-    const atencion = await this.prisma.atencion.findFirst({
-      where: {
-        id_alerta: alerta.id,
-        deleted_at: null,
-      },
-      include: {
-        atencion_funcionario: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
+    const atencion = await this.atencionRepository.findOne({
+      where: { idAlerta: alerta.id, deletedAt: undefined },
+      relations: ['funcionarios'],
     });
-
     if (!atencion) {
       throw new Error('No hay atención asignada para esta alerta');
     }
-
     return atencion;
   }
 
   async update(id: number, updateAtencionDto: UpdateAtencionDto) {
     try {
-      // Verificar que la atención existe
-      const atencionExistente = await this.prisma.atencion.findFirst({
-        where: {
-          id: BigInt(id),
-          deleted_at: null,
-        },
+      const atencionExistente = await this.atencionRepository.findOne({
+        where: { id, deletedAt: undefined },
       });
-
       if (!atencionExistente) {
         throw new Error('Atención no encontrada o eliminada');
       }
-
-      // Actualizar los datos básicos de la atención
-      const atencionActualizada = await this.prisma.atencion.update({
-        where: { id: BigInt(id) },
-        data: {
-          usuario_despachador: updateAtencionDto.usuario_despachador,
-          id_vehiculo: updateAtencionDto.id_vehiculo,
-          sigla_radio: updateAtencionDto.sigla_radio,
-          updated_at: new Date(),
-        },
+      await this.atencionRepository.update(id, {
+        usuarioDespachador: updateAtencionDto.usuarioDespachador,
+        codVehiculo: updateAtencionDto.codVehiculo,
+        siglaRadio: updateAtencionDto.siglaRadio,
+        updatedAt: new Date(),
       });
-
-      // Si se proporcionan funcionarios, actualizar la lista completa
       if (updateAtencionDto.funcionarios) {
-        // Soft delete de funcionarios existentes
-        await this.prisma.atencionFuncionario.updateMany({
-          where: {
-            id_atencion: BigInt(id),
-            deleted_at: null,
-          },
-          data: {
-            deleted_at: new Date(),
-            updated_at: new Date(),
-          },
-        });
-
-        // Crear nuevos funcionarios
+        await this.atencionFuncionarioRepository.update({ idAtencion: id, deletedAt: undefined }, { deletedAt: new Date(), updatedAt: new Date() });
         if (updateAtencionDto.funcionarios.length > 0) {
-          await this.prisma.atencionFuncionario.createMany({
-            data: updateAtencionDto.funcionarios.map((funcionario) => ({
-              id_atencion: BigInt(id),
-              id_funcionario: funcionario.id_funcionario,
+          const nuevosFuncionarios = updateAtencionDto.funcionarios.map((funcionario) => {
+            return this.atencionFuncionarioRepository.create({
+              idAtencion: id,
+              idFuncionario: funcionario.idFuncionario,
               encargado: funcionario.encargado || false,
-            })),
+            });
           });
+          await this.atencionFuncionarioRepository.save(nuevosFuncionarios);
         }
       }
-
-      // Solo retornar mensaje de estado sin datos del objeto
       return {
         message: 'Atención actualizada exitosamente',
       };
@@ -244,43 +148,21 @@ export class AtencionesService {
 
   async remove(id: number) {
     try {
-      // Verificar que la atención exists
-      const atencionExistente = await this.prisma.atencion.findFirst({
-        where: {
-          id: BigInt(id),
-          deleted_at: null,
-        },
+      const atencionExistente = await this.atencionRepository.findOne({
+        where: { id, deletedAt: undefined },
       });
-
       if (!atencionExistente) {
         throw new Error('Atención no encontrada o ya eliminada');
       }
-
-      // Soft delete de la atención
-      const atencionEliminada = await this.prisma.atencion.update({
-        where: { id: BigInt(id) },
-        data: {
-          deleted_at: new Date(),
-          updated_at: new Date(),
-        },
+      await this.atencionRepository.update(id, {
+        deletedAt: new Date(),
+        updatedAt: new Date(),
       });
-
-      // Soft delete de todos los funcionarios asociados
-      await this.prisma.atencionFuncionario.updateMany({
-        where: {
-          id_atencion: BigInt(id),
-          deleted_at: null,
-        },
-        data: {
-          deleted_at: new Date(),
-          updated_at: new Date(),
-        },
-      });
-
+      await this.atencionFuncionarioRepository.update({ idAtencion: id, deletedAt: undefined }, { deletedAt: new Date(), updatedAt: new Date() });
       return {
         message: 'Atención eliminada exitosamente',
         atencionId: id,
-        fechaEliminacion: atencionEliminada.deleted_at,
+        fechaEliminacion: new Date(),
       };
     } catch (error) {
       this.logger.error('Error al eliminar atención:', error);

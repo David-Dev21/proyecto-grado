@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, IsNull } from 'typeorm';
+import { Alerta } from '../entities/alerta.entity';
 import { ProcesadorUbicacionService } from 'src/alertas/services/procesador-ubicacion.service';
+import { EstadoAlerta } from '../../common/enums/alerta.enum';
 
 @Injectable()
 export class UbicacionPollingService {
   private readonly logger = new Logger(UbicacionPollingService.name);
 
   constructor(
-    private readonly prismaService: PrismaService,
+    @InjectRepository(Alerta)
+    private readonly alertaRepository: Repository<Alerta>,
     private readonly procesadorUbicacion: ProcesadorUbicacionService,
   ) {}
 
@@ -21,18 +25,12 @@ export class UbicacionPollingService {
 
     try {
       // Obtener todas las alertas en estado EN_PELIGRO o EN_CAMINO (activas)
-      const alertasActivas = await this.prismaService.alerta.findMany({
-        where: {
-          estado: {
-            in: ['EN_PELIGRO', 'EN_CAMINO'],
-          },
-          deleted_at: null, // No incluir alertas eliminadas
-        },
-        select: {
-          uuid: true,
-          id: true,
-          estado: true,
-        },
+      const alertasActivas = await this.alertaRepository.find({
+        where: [
+          { estado: EstadoAlerta.EN_PELIGRO, deletedAt: IsNull() },
+          { estado: EstadoAlerta.EN_CAMINO, deletedAt: IsNull() },
+        ],
+        select: ['uuid', 'id', 'estado'],
       });
 
       this.logger.log(`Se encontraron ${alertasActivas.length} alertas activas para consultar ubicaciones`);

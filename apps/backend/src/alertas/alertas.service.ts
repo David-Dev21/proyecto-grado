@@ -1,16 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CreateAlertaDto } from './dto/create-alerta.dto';
 import { UpdateAlertaDto } from './dto/update-alerta.dto';
-import { EstadoAlerta, OrigenAlerta } from '@prisma/client';
 import { PersonaService } from './services/persona.service';
 import { CudService } from './services/cud.service';
-import { AlertaRepository } from './interfaces/alerta-repository.interface';
 import { AlertaRepositoryToken } from '../constants/injection-tokens';
+import { EstadoAlerta, OrigenAlerta } from 'src/common/enums/alerta.enum';
+import { AlertasRepository } from './repositories/alertas.repository';
 
 @Injectable()
 export class AlertasService {
   constructor(
-    @Inject(AlertaRepositoryToken) private readonly alertaRepository: AlertaRepository,
+    @Inject(AlertaRepositoryToken) private readonly alertaRepository: AlertasRepository,
     private readonly personaService: PersonaService,
     private readonly cud: CudService,
   ) {}
@@ -24,12 +24,12 @@ export class AlertasService {
     return alerta.uuid;
   }
 
-  private async crearAlerta(datosAlerta: CreateAlertaDto, personaId: bigint) {
+  private async crearAlerta(datosAlerta: CreateAlertaDto, personaId: number) {
     return this.alertaRepository.create({
       uuid: datosAlerta.IdAlerta,
-      id_persona: personaId,
-      fecha_hora: new Date(datosAlerta.fechaRegistro),
-      nro_caso: this.cud.generate(),
+      idPersona: personaId,
+      fechaHora: new Date(datosAlerta.fechaRegistro),
+      codDenuncia: this.cud.generate(),
       estado: EstadoAlerta.EN_PELIGRO,
       origen: OrigenAlerta.ATT,
     });
@@ -51,9 +51,9 @@ export class AlertasService {
   async update(uuid: string, datosActualizacion: UpdateAlertaDto) {
     await this.verificarAlertaExiste(uuid);
     const datosParaActualizar = {
-      fecha_hora: datosActualizacion.fechaRegistro ? new Date(datosActualizacion.fechaRegistro) : undefined,
+      fechaHora: datosActualizacion.fechaRegistro ? new Date(datosActualizacion.fechaRegistro) : undefined,
       estado: datosActualizacion.estado || undefined,
-      updated_at: new Date(),
+      updatedAt: new Date(),
     };
 
     return this.alertaRepository.update(uuid, datosParaActualizar);

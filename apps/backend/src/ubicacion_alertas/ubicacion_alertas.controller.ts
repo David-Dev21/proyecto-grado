@@ -62,7 +62,7 @@ export class UbicacionAlertasController {
   })
   async findOne(@Param('id') id: string) {
     try {
-      const result = await this.ubicacionAlertasService.findOne(+id);
+      const result = await this.ubicacionAlertasService.findOne(id);
       if (!result) {
         throw new HttpException('Ubicación de alerta no encontrada', HttpStatus.NOT_FOUND);
       }
@@ -82,7 +82,7 @@ export class UbicacionAlertasController {
   @ApiResponse({ status: 200, description: 'Ubicaciones de la alerta' })
   async findByAlerta(@Param('id_alerta') id_alerta: string) {
     try {
-      return await this.ubicacionAlertasService.findByAlerta(+id_alerta);
+      return await this.ubicacionAlertasService.findByAlerta(Number(id_alerta));
     } catch (error) {
       this.logger.error('Error al obtener ubicaciones por alerta:', error);
       throw new HttpException('Error interno del servidor', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -96,7 +96,7 @@ export class UbicacionAlertasController {
   @ApiResponse({ status: 404, description: 'Ubicación no encontrada' })
   async update(@Param('id') id: string, @Body() updateUbicacionAlertaDto: UpdateUbicacionAlertaDto) {
     try {
-      const result = await this.ubicacionAlertasService.update(+id, updateUbicacionAlertaDto);
+      const result = await this.ubicacionAlertasService.update(id, updateUbicacionAlertaDto);
       if (!result) {
         throw new HttpException('Ubicación de alerta no encontrada', HttpStatus.NOT_FOUND);
       }
@@ -117,7 +117,7 @@ export class UbicacionAlertasController {
   @ApiResponse({ status: 404, description: 'Ubicación no encontrada' })
   async remove(@Param('id') id: string) {
     try {
-      const result = await this.ubicacionAlertasService.remove(+id);
+      const result = await this.ubicacionAlertasService.remove(id);
       if (!result) {
         throw new HttpException('Ubicación de alerta no encontrada', HttpStatus.NOT_FOUND);
       }

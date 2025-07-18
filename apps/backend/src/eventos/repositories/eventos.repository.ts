@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Evento } from '../entities/evento.entity';
-import { IEventosRepository } from '@alertas/types';
+import { IEventosRepository } from '../interface/eventos.interface';
 import { CreateEventoDto } from '../dto/create-evento.dto';
 
 @Injectable()
@@ -14,14 +14,14 @@ export class EventosRepository implements IEventosRepository {
 
   async findAll(): Promise<Evento[]> {
     return this.repository.find({
-      where: { deleted_at: IsNull() },
+      where: { deletedAt: IsNull() },
       relations: ['alerta'],
     });
   }
 
   async findOne(id: string): Promise<Evento> {
     const evento = await this.repository.findOne({
-      where: { id: parseInt(id), deleted_at: IsNull() },
+      where: { id: parseInt(id), deletedAt: IsNull() },
       relations: ['alerta'],
     });
     if (!evento) {
@@ -37,30 +37,26 @@ export class EventosRepository implements IEventosRepository {
   }
 
   async update(id: string, data: Partial<Evento>): Promise<Evento> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, data);
+    await this.repository.update({ id: parseInt(id), deletedAt: IsNull() }, data);
     return this.findOne(id);
   }
 
   async delete(id: string): Promise<void> {
-    await this.repository.update({ id: parseInt(id), deleted_at: IsNull() }, { deleted_at: new Date() });
+    await this.repository.update({ id: parseInt(id), deletedAt: IsNull() }, { deletedAt: new Date() });
   }
 
   async findByAlertaId(idAlerta: number): Promise<Evento[]> {
     return this.repository.find({
-      where: { id_alerta: idAlerta, deleted_at: IsNull() },
+      where: { idAlerta: idAlerta, deletedAt: IsNull() },
       relations: ['alerta'],
-      order: { fecha_hora: 'DESC' },
+      order: { fechaHora: 'DESC' },
     });
   }
 
   async findByFuncionarioId(idFuncionario: string): Promise<Evento[]> {
     return this.repository.find({
-      where: { id_funcionario: idFuncionario, deleted_at: IsNull() },
+      where: { idFuncionario: idFuncionario, deletedAt: IsNull() },
       relations: ['alerta'],
     });
-  }
-
-  async delete(id: string): Promise<void> {
-    await this.repository.delete(id);
   }
 }
